@@ -13,4 +13,6 @@ Revision history for Perl extension Audio::Wav.
   - slight speed improvement for read & write methods
   - some other fixes.
 
+0.03  Fri Jun 11 13:29:00 2004
+  - minor bug fix to pass tests with Perl 5.8.3 (thanks to Jeremy Devenport <jeremyd713@hotmail.com>).
 

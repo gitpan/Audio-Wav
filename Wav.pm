@@ -4,7 +4,7 @@ use strict;
 use Audio::Wav::Tools;
 
 use vars qw( $VERSION );
-$VERSION = '0.02';
+$VERSION = '0.03';
 
 =head1 NAME
 
@@ -146,7 +146,7 @@ sub set_error_handler {
 =head1 AUTHORS
 
     Nick Peskett <cpan@peskett.com>.
-    Kurt George Gjerde <kurt.gjerde@media.uib.no>. (0.02)
+    Kurt George Gjerde <kurt.gjerde@media.uib.no>. (from 0.02)
 
 =cut
 

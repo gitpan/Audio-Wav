@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------
-                  README file for Audio::Wav (0.02).
+                  README file for Audio::Wav (0.03).
 ---------------------------------------------------------------------
 
 Modules for reading & writing Microsoft WAV files.
@@ -396,7 +396,7 @@ METHODS
 ---------------------------------------------------------------------
 
 	Nick Peskett <cpan@peskett.com>.
-	Kurt George Gjerde <kurt.gjerde@media.uib.no>. (0.02)
+	Kurt George Gjerde <kurt.gjerde@media.uib.no>. (from 0.02)
 
 ---------------------------------------------------------------------
                                 END
