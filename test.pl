@@ -1,4 +1,3 @@
-
 use strict;
 
 $| = 1;
@@ -9,7 +8,7 @@ my $out_dir = 'test_output';
 
 unless ( -d $out_dir ) {
     mkdir( $out_dir, 0777 ) ||
-	    die "unable to make test output directory '$out_dir' - ($!)";
+	die "unable to make test output directory '$out_dir' - ($!)";
 }
 
 use Audio::Wav;
@@ -23,10 +22,10 @@ print "1..4\n\n";
 print "\nTesting wav creation\n";
 
 my %wav_options = ( # these are optional & default to 0
-		    '.01compatible'	=> 0,
-		    'oldcooledithack'	=> 0,
-		    'debug'		=> 0,
-		  );
+    '.01compatible'	=> 0,
+    'oldcooledithack'	=> 0,
+    'debug'		=> 0,
+);
 
 
 my $wav = Audio::Wav -> new( %wav_options );
@@ -39,10 +38,10 @@ my $length = 2;
 my $channels = 1;
 
 my $details =	{
-		'bits_sample'	=> $bits_sample,
-		'sample_rate'	=> $sample_rate,
-		'channels'	=> $channels,
-		};
+    'bits_sample'	=> $bits_sample,
+    'sample_rate'	=> $sample_rate,
+    'channels'		=> $channels,
+};
 
 my $write = $wav -> write( $file_out, $details );
 
@@ -62,16 +61,16 @@ $write -> add_cue( $sec_samps, "onesec", "one second" );
 print "Cue 3 at $sec_samps\n";
 
 my %samp_loop = (
-		'start'	=> &seconds_to_samples( $length * .25 ),
-		'end'	=> &seconds_to_samples( $length * .75 ),
-		);
+    'start'	=> &seconds_to_samples( $length * .25 ),
+    'end'	=> &seconds_to_samples( $length * .75 ),
+);
 
 $write -> add_sampler_loop( %samp_loop );
 
 my %display = (
-		'id'	=> 1,
-		'data'	=> 'Submarine Captain',
-	      );
+    'id'	=> 1,
+    'data'	=> 'Submarine Captain',
+);
 
 $write -> add_display( %display );
 
@@ -166,18 +165,18 @@ print "took ", int( time - $started ), " seconds";
 
 sub test_wav {
     my $file = 'test_tone.wav';
-    my $cued_sample = -15;
+    my $cued_sample = -12;
     my %match_details = (
-			'bits_sample'	=> 8,
-			'length'	=> '0.5',
-			'block_align'	=> 1,
-			'bytes_sec'	=> 8000,
-			'total_length'	=> 4152,
-			'channels'	=> 1,
-			'sample_rate'	=> 8000,
-			'data_length'	=> 4000,
-			'data_start'	=> '44',
-			);
+	'bits_sample'	=> 8,
+	'length'	=> '0.5',
+	'block_align'	=> 1,
+	'bytes_sec'	=> 8000,
+	'total_length'	=> 4152,
+	'channels'	=> 1,
+	'sample_rate'	=> 8000,
+	'data_length'	=> 4000,
+	'data_start'	=> '44',
+    );
     my $read = $wav -> read( $file );
     my $details = $read -> details();
     foreach my $key ( keys %match_details ) {
@@ -198,7 +197,7 @@ sub test_wav {
     }
     my( $sample ) = $read -> read();
     unless ( $cued_sample == $sample ) {
-	warn "sample at position $pos does not match $cued_sample\n";
+	warn "sample at position $pos does not match $cued_sample (should be $sample)\n";
 	return 0;
     }
     return 1;

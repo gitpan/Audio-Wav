@@ -4,7 +4,7 @@ use strict;
 use Audio::Wav::Tools;
 
 use vars qw( $VERSION );
-$VERSION = '0.03';
+$VERSION = '0.04';
 
 =head1 NAME
 
@@ -26,9 +26,9 @@ Audio::Wav - Modules for reading & writing Microsoft WAV files.
     my $length = $read -> length_samples();
     my( $third, $half, $twothirds ) = map int( $length / $_ ), ( 3, 2, 1.5 );
     my %samp_loop = (
-		    'start'	=> $third,
-		    'end'	=> $twothirds,
-		    );
+	'start'	=> $third,
+	'end'	=> $twothirds,
+    );
     $write -> add_sampler_loop( %samp_loop );
     $write -> add_cue( $half, "cue label 1", "cue note 1" );
     $write -> finish();
@@ -55,10 +55,10 @@ Returns a blessed Audio::Wav object.
 All the parameters are optional and default to 0
 
     my %options = (
-		    '.01compatible'	=> 0,
-		    'oldcooledithack'	=> 0,
-		    'debug'		=> 0,
-		  );
+	'.01compatible'		=> 0,
+	'oldcooledithack'	=> 0,
+	'debug'			=> 0,
+    );
     my $wav = Audio::Wav -> new( %options );
 
 =cut
@@ -67,8 +67,8 @@ sub new {
     my $class = shift;
     my $tools = Audio::Wav::Tools -> new( @_ );
     my $self =	{
-		'tools'		=> $tools,
-		};
+	'tools'		=> $tools,
+    };
     bless $self, $class;
     return $self;
 }
@@ -78,10 +78,10 @@ sub new {
 Returns a blessed Audio::Wav::Write object.
 
     my $details = {
-		    'bits_sample'	=> 16,
-		    'sample_rate'	=> 44100,
-		    'channels'		=> 2,
-		  };
+	'bits_sample'	=> 16,
+	'sample_rate'	=> 44100,
+	'channels'	=> 2,
+    };
 
     my $write = $wav -> write( 'testout.wav', $details );
 
@@ -145,7 +145,7 @@ sub set_error_handler {
 
 =head1 AUTHORS
 
-    Nick Peskett <cpan@peskett.com>.
+    Nick Peskett (see http://www.peskett.co.uk/ for contact details).
     Kurt George Gjerde <kurt.gjerde@media.uib.no>. (from 0.02)
 
 =cut
