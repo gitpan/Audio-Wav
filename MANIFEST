@@ -1,6 +1,7 @@
 Changes
 MANIFEST
 README
+LICENSE
 Makefile.PL
 Wav.pm
 test.pl

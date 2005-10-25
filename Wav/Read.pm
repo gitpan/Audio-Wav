@@ -273,7 +273,7 @@ Returns the current audio data position (in samples).
 
 sub position_samples {
     my $self = shift;
-    return ( $self -> {'pos'} - $self -> {'data'} -> {'data_start'} ) * $self -> {'data'} -> {'block_align'};
+    return ( $self -> {'pos'} - $self -> {'data'} -> {'data_start'} ) / $self -> {'data'} -> {'block_align'};
 }
 
 =head2 move_to
@@ -459,7 +459,8 @@ sub _read_file {
 	} else {
 	    $head =~ s/[^\w]+//g;
 	    $self -> _error( "ignored unknown block type: $head at $self->{pos} for $chunk_len", 'warn' );
-	    next if $chunk_len > 100;
+# not sure why this was here
+#	    next if $chunk_len > 100;
 	}
 
 	seek $handle, $chunk_len, 1;

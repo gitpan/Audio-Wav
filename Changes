@@ -14,7 +14,7 @@ Revision history for Perl extension Audio::Wav.
   - some other fixes.
 
 0.03  Fri Jun 11 13:29:00 2004
-  - minor bug fix to pass tests with Perl 5.8.3 (thanks to Jeremy Devenport <jeremyd713@hotmail.com>).
+  - minor bug fix to pass tests with Perl 5.8.3 (thanks to Jeremy Devenport).
 
 0.04  Thu Dec 30 07:47:00 2004
   - fixed a bug in Audio::Wav::Read::move_to, now adds where the data actually starts to the position given.
@@ -24,3 +24,7 @@ Revision history for Perl extension Audio::Wav.
   - added method Audio::Wav::Read::position_samples which returns the current audio data position in samples.
   - in method Audio::Wav::Write::add_cue, if sample position supplied is undefined, then the position will be the current position (end of all data written so far).
   - in method Audio::Wav::Write, moved the option of not caching data from the write_raw method to new.
+
+0.05  Tue Oct 25 12:20:00 2005
+  - Audio::Wav::Read::position_samples should have divided by block_align, rather than multiplied (thanks David Brandt).
+  - Fixed bug where unknown blocks weren't skipped (thanks Robert Hiller).

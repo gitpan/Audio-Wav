@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------
-                  README file for Audio::Wav (0.04).
+                  README file for Audio::Wav (0.05).
 ---------------------------------------------------------------------
 
 Modules for reading & writing Microsoft WAV files.
@@ -8,8 +8,8 @@ Modules for reading & writing Microsoft WAV files.
                              INSTALLATION
 ---------------------------------------------------------------------
 
-tar zxvf Audio-Wav-0.04.tar.gz
-cd Audio-Wav-0.04
+tar zxvf Audio-Wav-0.05.tar.gz
+cd Audio-Wav-0.05
 perl Makefile.PL
 make test
 make install
