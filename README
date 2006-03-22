@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------
-                  README file for Audio::Wav (0.05).
+                  README file for Audio::Wav (0.06).
 ---------------------------------------------------------------------
 
 Modules for reading & writing Microsoft WAV files.
@@ -8,8 +8,8 @@ Modules for reading & writing Microsoft WAV files.
                              INSTALLATION
 ---------------------------------------------------------------------
 
-tar zxvf Audio-Wav-0.05.tar.gz
-cd Audio-Wav-0.05
+tar zxvf Audio-Wav-0.06.tar.gz
+cd Audio-Wav-0.06
 perl Makefile.PL
 make test
 make install
@@ -26,6 +26,7 @@ NAME
     Audio::Wav - Modules for reading & writing Microsoft WAV files.
 
 SYNOPSIS
+    # copying a file and adding some cue points to the output file
     use Audio::Wav;
     my $wav = new Audio::Wav;
     my $read = $wav -> read( 'input.wav' );
@@ -34,7 +35,8 @@ SYNOPSIS
 
     $write -> set_info( 'software' => 'Audio::Wav' );
     my $data;
-    while ( defined( $data = $read -> read_raw( $buffer ) ) ) {
+    #read 512 bytes
+    while ( defined( $data = $read -> read_raw( 512 ) ) ) {
 	$write -> write_raw( $data );
     }
     my $length = $read -> length_samples();
@@ -47,9 +49,48 @@ SYNOPSIS
     $write -> add_cue( $half, "cue label 1", "cue note 1" );
     $write -> finish();
 
+    # splitting a multi-channel file to seperate mono files (slowly!);
+    use Audio::Wav;
+    my $read = $wav -> read( '4ch.wav' );
+    my $details = $read -> details();
+    my %out_details = map { $_ => $details -> {$_} } 'bits_sample', 'sample_rate';
+    $out_details{'channels'} = 1;
+    my @out_files;
+    my $in_channels = $details -> {'channels'};
+    foreach my $channel ( 1 .. $in_channels ) {
+	push @out_files, $wav -> write( 'multi_' . $channel . '.wav', \%out_details );
+    }
+
+    while ( 1 ) {
+	my @channels = $read -> read();
+	last unless @channels;
+	foreach my $channel_id ( 0 .. $#channels ) {
+	    $out_files[$channel_id] -> write( $channels[$channel_id] );
+	}
+    }
+
+    # not entirely neccessary as finish is done in DESTROY now (if the file hasn't been finished already).
+    foreach my $write ( @out_files ) {
+	$write -> finish();
+    }
+
 NOTES
     All sample positions are now in sample offsets (unless option
     '.01compatible' is true).
+
+    There is now *very* basic support for WAVEFORMATEXTENSIBLE (in fact it
+    only recognises that the file is in this format). The key 'wave-ex' is
+    used in the detail hash to denote this format when reading or writing.
+    I'd like to do more with this, but don't have any hardware or software
+    to test these files, also don't really have any spare time to do the
+    implementation at present.
+
+    One day I plan to learn enough C to do the sample reading/ writing in
+    XS, but for the time being it's done using pack/ unpack in Perl and is
+    slow. Working with the raw format doesn't suffer in this way.
+
+    It's likely that reading/ writing files with bit-depth greater than 16
+    won't work properly, I need to look at this at some point.
 
 DESCRIPTION
     These modules provide a method of reading & writing uncompressed
@@ -93,17 +134,17 @@ METHODS
     message), and 'warning'. If no error handler is set, die and warn will
     be used.
 
-    sub myErrorHandler {
-	my( %parameters ) = @_;
-	if ( $parameters{'warning'} ) {
-	    # This is a non-critical warning
-	    warn "Warning: $parameters{'filename'}: $parameters{'message'}\n";
-	} else {
-	    # Critical error!
-	    die "ERROR: $parameters{'filename'}: $parameters{'message'}\n";
-	}
-    }
-    $wav -> set_error_handler( \&myErrorHandler );
+        sub myErrorHandler {
+            my( %parameters ) = @_;
+            if ( $parameters{'warning'} ) {
+                # This is a non-critical warning
+                warn "Warning: $parameters{'filename'}: $parameters{'message'}\n";
+            } else {
+                # Critical error!
+                die "ERROR: $parameters{'filename'}: $parameters{'message'}\n";
+            }
+        }
+        $wav -> set_error_handler( \&myErrorHandler );
 
 ---------------------------------------------------------------------
                            Audio::Wav::Read
@@ -114,13 +155,18 @@ NAME
     Audio::Wav::Read - Module for reading Microsoft WAV files.
 
 SYNOPSIS
-        use Audio::Wav;
-        my $wav = new Audio::Wav;
-        my $read = $wav -> read( 'filename.wav' );
-        my $details = $read -> details();
+    use Audio::Wav;
+    my $wav = new Audio::Wav;
+    my $read = $wav -> read( 'filename.wav' );
+    my $details = $read -> details();
 
 DESCRIPTION
     Reads Microsoft Wav files.
+
+SEE ALSO
+    Audio::Wav
+
+    Audio::Wav::Write
 
 NOTES
     This module shouldn't be used directly, a blessed object can be returned
@@ -301,6 +347,11 @@ SYNOPSIS
 DESCRIPTION
     Currently only writes to a file.
 
+SEE ALSO
+    Audio::Wav
+
+    Audio::Wav::Read
+
 NOTES
     This module shouldn't be used directly, a blessed object can be returned
     from Audio::Wav.
@@ -393,7 +444,7 @@ METHODS
 ---------------------------------------------------------------------
 
     Nick Peskett (see http://www.peskett.co.uk/ for contact details).
-    Kurt George Gjerde <kurt.gjerde@media.uib.no>. (from 0.02)
+    Kurt George Gjerde <kurt.gjerde@media.uib.no>. (0.02-0.03)
 
 ---------------------------------------------------------------------
                                 END

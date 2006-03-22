@@ -4,7 +4,7 @@ use strict;
 use FileHandle;
 
 use vars qw( $VERSION );
-$VERSION = '0.04';
+$VERSION = '0.06';
 
 =head1 NAME
 
@@ -67,6 +67,17 @@ sub new {
     return $self;
 }
 
+# just in case there's any memory leaks
+sub DESTROY {
+    my $self = shift;
+    return unless $self;
+    if ( exists $self -> {'handle'} ) {
+	$self -> {'handle'} -> close();
+    }
+    if ( exists $self -> {'tools'} ) {
+	delete $self -> {'tools'};
+    }
+}
 
 =head2 file_name
 
@@ -436,8 +447,12 @@ sub _read_file {
 	if ( $head eq 'fmt ' ) {
 	    my $format = $self -> _read_fmt( $chunk_len );
 	    my $comp = delete( $format -> {'format'} );
-	    unless ( $comp == 1 ) {
+	    if ( $comp == 65534 ) {
+		$format -> {'wave-ex'} = 1;
+	    } elsif ( $comp != 1 ) {
 		return $self -> _error( "seems to be compressed, I can't handle anything other than uncompressed PCM" );
+	    } else {
+		$format -> {'wave-ex'} = 0;
 	    }
 	    %details = ( %details, %$format );
 	    next;
@@ -459,8 +474,6 @@ sub _read_file {
 	} else {
 	    $head =~ s/[^\w]+//g;
 	    $self -> _error( "ignored unknown block type: $head at $self->{pos} for $chunk_len", 'warn' );
-# not sure why this was here
-#	    next if $chunk_len > 100;
 	}
 
 	seek $handle, $chunk_len, 1;
@@ -675,7 +688,7 @@ sub _error {
 =head1 AUTHORS
 
     Nick Peskett (see http://www.peskett.co.uk/ for contact details).
-    Kurt George Gjerde <kurt.gjerde@media.uib.no>. (from 0.02)
+    Kurt George Gjerde <kurt.gjerde@media.uib.no>. (0.02-0.03)
 
 =cut
 

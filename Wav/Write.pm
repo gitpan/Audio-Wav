@@ -5,10 +5,7 @@ use FileHandle;
 use Audio::Wav::Write::Header;
 
 use vars qw( $VERSION );
-$VERSION = '0.04';
-
-my @needed = qw( bits_sample channels sample_rate );
-my @wanted = qw( block_align bytes_sec info);
+$VERSION = '0.06';
 
 =head1 NAME
 
@@ -94,6 +91,7 @@ sub new {
 	'details'	=> $details,
 	'block_align'	=> $details -> {'block_align'},
 	'tools'		=> $tools,
+	'done_finish'	=> 0,
     };
 
     bless $self, $class;
@@ -120,6 +118,13 @@ sub new {
     return $self;
 }
 
+sub DESTROY {
+    my $self = shift;
+    return unless $self;
+    return if $self -> {'done_finish'};
+    $self -> finish();
+}
+
 =head2 finish
 
 Finishes off & closes the current wav file.
@@ -131,11 +136,9 @@ Finishes off & closes the current wav file.
 sub finish {
     my $self = shift;
     $self -> _purge_cache() if $self -> {'use_cache'};
-    my $length = $self -> {'pos'};
-    my $header = $self -> {'header'};
-    $header -> finish( $length );
+    $self -> {'header'} -> finish( $self -> {'pos'} );
     $self -> {'handle'} -> close();
-    my $filename = $self -> {'out_file'};
+    $self -> {'done_finish'} = 1;
 }
 
 =head2 add_cue
@@ -325,7 +328,7 @@ sub write_raw_samples {
 sub _start_file {
     my $self = shift;
     my( $file, $details, $tools, $handle ) = map $self -> {$_}, qw( out_file details tools handle );
-    my $header = Audio::Wav::Write::Header -> new( $file, $details, $tools, $handle, $self );
+    my $header = Audio::Wav::Write::Header -> new( $file, $details, $tools, $handle );
     $self -> {'header'} = $header;
     my $data = $header -> start();
     $self -> write_raw( $data );
@@ -347,6 +350,9 @@ sub _init {
     my $details = $self -> {'details'};
     my $output = {};
     my @missing;
+    my @needed = ( 'bits_sample', 'channels', 'sample_rate' );
+    my @wanted = ( 'block_align', 'bytes_sec', 'info', 'wave-ex' );
+
     foreach my $need ( @needed ) {
 	if ( exists( $details -> {$need} ) && $details -> {$need} ) {
 	    $output -> {$need} = $details -> {$need};
@@ -416,7 +422,7 @@ sub _error {
 =head1 AUTHORS
 
     Nick Peskett (see http://www.peskett.co.uk/ for contact details).
-    Kurt George Gjerde <kurt.gjerde@media.uib.no>. (from 0.02)
+    Kurt George Gjerde <kurt.gjerde@media.uib.no>. (0.02-0.03)
 
 =cut
 

@@ -4,7 +4,7 @@ use strict;
 use Audio::Wav::Tools;
 
 use vars qw( $VERSION );
-$VERSION = '0.04';
+$VERSION = '0.06';
 
 =head1 NAME
 
@@ -12,6 +12,7 @@ Audio::Wav - Modules for reading & writing Microsoft WAV files.
 
 =head1 SYNOPSIS
 
+    # copying a file and adding some cue points to the output file
     use Audio::Wav;
     my $wav = new Audio::Wav;
     my $read = $wav -> read( 'input.wav' );
@@ -20,7 +21,8 @@ Audio::Wav - Modules for reading & writing Microsoft WAV files.
 
     $write -> set_info( 'software' => 'Audio::Wav' );
     my $data;
-    while ( defined( $data = $read -> read_raw( $buffer ) ) ) {
+    #read 512 bytes
+    while ( defined( $data = $read -> read_raw( 512 ) ) ) {
 	$write -> write_raw( $data );
     }
     my $length = $read -> length_samples();
@@ -33,9 +35,45 @@ Audio::Wav - Modules for reading & writing Microsoft WAV files.
     $write -> add_cue( $half, "cue label 1", "cue note 1" );
     $write -> finish();
 
+
+    # splitting a multi-channel file to seperate mono files (slowly!);
+    use Audio::Wav;
+    my $read = $wav -> read( '4ch.wav' );
+    my $details = $read -> details();
+    my %out_details = map { $_ => $details -> {$_} } 'bits_sample', 'sample_rate';
+    $out_details{'channels'} = 1;
+    my @out_files;
+    my $in_channels = $details -> {'channels'};
+    foreach my $channel ( 1 .. $in_channels ) {
+	push @out_files, $wav -> write( 'multi_' . $channel . '.wav', \%out_details );
+    }
+
+    while ( 1 ) {
+	my @channels = $read -> read();
+	last unless @channels;
+	foreach my $channel_id ( 0 .. $#channels ) {
+	    $out_files[$channel_id] -> write( $channels[$channel_id] );
+	}
+    }
+
+    # not entirely neccessary as finish is done in DESTROY now (if the file hasn't been finished already).
+    foreach my $write ( @out_files ) {
+	$write -> finish();
+    }
+
+
 =head1 NOTES
 
 All sample positions are now in sample offsets (unless option '.01compatible' is true).
+
+There is now *very* basic support for WAVEFORMATEXTENSIBLE (in fact it only recognises that the file is in this format).
+The key 'wave-ex' is used in the detail hash to denote this format when reading or writing.
+I'd like to do more with this, but don't have any hardware or software to test these files, also don't really have any spare time to do the implementation at present.
+
+One day I plan to learn enough C to do the sample reading/ writing in XS, but for the time being it's done using pack/ unpack in Perl and is slow.
+Working with the raw format doesn't suffer in this way.
+
+It's likely that reading/ writing files with bit-depth greater than 16 won't work properly, I need to look at this at some point.
 
 =head1 DESCRIPTION
 
@@ -146,7 +184,7 @@ sub set_error_handler {
 =head1 AUTHORS
 
     Nick Peskett (see http://www.peskett.co.uk/ for contact details).
-    Kurt George Gjerde <kurt.gjerde@media.uib.no>. (from 0.02)
+    Kurt George Gjerde <kurt.gjerde@media.uib.no>. (0.02-0.03)
 
 =cut
 

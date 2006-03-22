@@ -3,7 +3,7 @@ package Audio::Wav::Write::Header;
 use strict;
 
 use vars qw( $VERSION );
-$VERSION = '0.04';
+$VERSION = '0.06';
 
 sub new {
     my $class = shift;
@@ -11,7 +11,6 @@ sub new {
     my $details = shift;
     my $tools = shift;
     my $handle = shift;
-    my $parent = shift;
     my $self = {
 	'file'		=> $file,
 	'data'		=> undef,
@@ -19,7 +18,6 @@ sub new {
 	'tools'		=> $tools,
 	'handle'	=> $handle,
 	'whole_offset'	=> 4,
-	'parent'	=> $parent,
     };
     bless $self, $class;
     return $self;
@@ -65,16 +63,14 @@ sub finish {
     my $whole_num = pack( 'V', $self -> {'total'} + $data_size + $data_pad + $extra );  #includes padding
     my $len_long = length( $whole_num );
 
-    my $parent = $self -> {'parent'};
-
     # RIFF-length
     my $seek_to = $self -> {'whole_offset'};
-    seek( $handle, $seek_to, 0 ) || return $parent -> _error( "unable to seek to $seek_to ($!)" );
+    seek( $handle, $seek_to, 0 ) || return $self -> _error( "unable to seek to $seek_to ($!)" );
     syswrite( $handle, $whole_num, $len_long );
 
     # data-length
     $seek_to = $self -> {'data_offset'};
-    seek( $handle, $seek_to, 0 ) || return $parent -> _error( "unable to seek to $seek_to ($!)" );
+    seek( $handle, $seek_to, 0 ) || return $self -> _error( "unable to seek to $seek_to ($!)" );
     my $data_num = pack( 'V', $data_size );
     syswrite( $handle, $data_num, $len_long );
     return 1;
@@ -266,7 +262,8 @@ sub _format {
     my $self = shift;
     my $details = $self -> {'details'};
     my $types = $self -> {'tools'} -> get_wav_pack();
-    $details -> {'format'} = 1;
+    my $wave_ex = exists( $details -> {'wave-ex'} ) && $details -> {'wave-ex'} ? 1 : 0;
+    $details -> {'format'} = $wave_ex ? 65534 : 1;
     my $output;
     foreach my $type ( @{ $types -> {'order'} } ) {
 	$output .= pack( $types -> {'types'} -> {$type}, $details -> {$type} );
