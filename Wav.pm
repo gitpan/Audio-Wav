@@ -4,7 +4,7 @@ use strict;
 use Audio::Wav::Tools;
 
 use vars qw( $VERSION );
-$VERSION = '0.06';
+$VERSION = '0.07';
 
 =head1 NAME
 
@@ -122,6 +122,10 @@ Returns a blessed Audio::Wav::Write object.
     };
 
     my $write = $wav -> write( 'testout.wav', $details );
+    my $write = Audio::Wav -> write( 'testout.wav', $details);
+    my $write = Audio::Wav -> write( 'testout.wav', $details, %options );
+
+where %options is in the form of arguments for L<Audio::Wav::Tools>.
 
 See L<Audio::Wav::Write> for methods.
 
@@ -132,15 +136,24 @@ sub write {
     my $file = shift;
     my $details = shift;
     require Audio::Wav::Write;
-    my $write = Audio::Wav::Write -> new( $file, $details, $self -> {'tools'} );
-    return $write;
+    my $write;
+    if(ref($self)) {
+        $write = Audio::Wav::Write -> new( $file, $details, $self -> {'tools'} );
+    } else {
+        $write = Audio::Wav::Write -> new( $file, Audio::Wav::Tools -> new( @_ ) );
+    }
+    return $write; 
 }
 
 =head2 read
 
 Returns a blessed Audio::Wav::Read object.
 
-    my $read = $wav -> read( 'testout.wav' );
+    my $read = $wav -> read( 'testin.wav' );
+    my $read = Audio::Wav -> read( 'testin.wav' );
+    my $read = Audio::Wav -> read( 'testin.wav', %options );
+
+where %options is in the form of arguments for L<Audio::Wav::Tools>.
 
 See L<Audio::Wav::Read> for methods.
 
@@ -150,8 +163,13 @@ sub read {
     my $self = shift;
     my $file = shift;
     require Audio::Wav::Read;
-    my $read = Audio::Wav::Read -> new( $file, $self -> {'tools'} );
-    return $read;
+    my $read;
+    if(ref($self)) {
+        $read = Audio::Wav::Read -> new( $file, $self -> {'tools'} );
+    } else {
+        $read = Audio::Wav::Read -> new( $file, Audio::Wav::Tools -> new( @_ ) );
+    }
+    return $read; 
 }
 
 

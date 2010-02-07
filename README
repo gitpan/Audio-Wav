@@ -37,13 +37,13 @@ SYNOPSIS
     my $data;
     #read 512 bytes
     while ( defined( $data = $read -> read_raw( 512 ) ) ) {
-	$write -> write_raw( $data );
+        $write -> write_raw( $data );
     }
     my $length = $read -> length_samples();
     my( $third, $half, $twothirds ) = map int( $length / $_ ), ( 3, 2, 1.5 );
     my %samp_loop = (
-	'start' => $third,
-	'end'   => $twothirds,
+        'start' => $third,
+        'end'   => $twothirds,
     );
     $write -> add_sampler_loop( %samp_loop );
     $write -> add_cue( $half, "cue label 1", "cue note 1" );
@@ -58,20 +58,20 @@ SYNOPSIS
     my @out_files;
     my $in_channels = $details -> {'channels'};
     foreach my $channel ( 1 .. $in_channels ) {
-	push @out_files, $wav -> write( 'multi_' . $channel . '.wav', \%out_details );
+        push @out_files, $wav -> write( 'multi_' . $channel . '.wav', \%out_details );
     }
 
     while ( 1 ) {
-	my @channels = $read -> read();
-	last unless @channels;
-	foreach my $channel_id ( 0 .. $#channels ) {
-	    $out_files[$channel_id] -> write( $channels[$channel_id] );
-	}
+        my @channels = $read -> read();
+        last unless @channels;
+        foreach my $channel_id ( 0 .. $#channels ) {
+            $out_files[$channel_id] -> write( $channels[$channel_id] );
+        }
     }
 
     # not entirely neccessary as finish is done in DESTROY now (if the file hasn't been finished already).
     foreach my $write ( @out_files ) {
-	$write -> finish();
+        $write -> finish();
     }
 
 NOTES
@@ -156,8 +156,12 @@ NAME
 
 SYNOPSIS
     use Audio::Wav;
+
     my $wav = new Audio::Wav;
     my $read = $wav -> read( 'filename.wav' );
+OR
+    my $read = Audio::Wav -> read( 'filename.wav' );
+
     my $details = $read -> details();
 
 DESCRIPTION
@@ -443,6 +447,7 @@ METHODS
                               AUTHORS
 ---------------------------------------------------------------------
 
+    Brian Szymanski <ski-cpan@allafrica.com> 0.07
     Nick Peskett (see http://www.peskett.co.uk/ for contact details).
     Kurt George Gjerde <kurt.gjerde@media.uib.no>. (0.02-0.03)
 

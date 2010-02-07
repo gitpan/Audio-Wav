@@ -10,3 +10,4 @@ Wav/Read.pm
 Wav/Write.pm
 Wav/Tools.pm
 Wav/Write/Header.pm
+META.yml                                 Module meta-data (added by MakeMaker)

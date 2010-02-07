@@ -34,3 +34,15 @@ Revision history for Perl extension Audio::Wav.
   - Tidied up bits and pieces.
   - Added very basic support for WAVEFORMATEXTENSIBLE.
   - When writing files, finish() will now be called by DESTROY if necessary.
+
+0.07  Sun Feb 07 18:05:41 GMT 2010
+  - change API so you can call Audio::Wav->{read|write} w/o new() if preferred
+  - increase pure perl read speed by a factor of ~2.4
+    * remove unnecessary bounds check
+    * put block in closure, avoiding double hash lookup
+    * put $block assign in _init_read_sub, put read_sub in closure, too
+    * pull $handle into closure:
+    * get rid of closure, and get rid of read() - inline it with $read_sub
+  - use Inline::C (if available) to increase read speed by a factor of ~2.3
+  - experimental support for reading 24- and 32- bit data (suspected to
+    work on little endian machines that use Inline::C)

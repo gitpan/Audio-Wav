@@ -81,9 +81,9 @@ print "ok $cnt\n";
 
 ### Wav Copying
 
-print "\nTesting wav copying\n";
+print "\nTesting wav copying and shortcut syntax\n";
 
-my $read = $wav -> read( $file_out );
+my $read = Audio::Wav -> read( $file_out );
 
 # print Data::Dumper->Dump([ $read -> details() ]);
 
