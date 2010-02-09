@@ -4,7 +4,7 @@ use strict;
 use FileHandle;
 
 use vars qw( $VERSION );
-$VERSION = '0.07';
+$VERSION = '0.08';
 
 =head1 NAME
 
@@ -16,7 +16,7 @@ Audio::Wav::Read - Module for reading Microsoft WAV files.
 
     my $wav = new Audio::Wav;
     my $read = $wav -> read( 'filename.wav' );
-OR
+#OR
     my $read = Audio::Wav -> read( 'filename.wav' );
 
     my $details = $read -> details();
@@ -61,7 +61,7 @@ sub new {
         return $self;
     }
 
-    binmode $handle;
+    binmode $handle; 
 
 BEGIN {
     eval { require Inline::C };
@@ -88,10 +88,10 @@ BEGIN {
     $self -> _init_read_sub();
     $self -> {'pos'} = $details -> {'data_start'};
     $self -> move_to();
-    return $self;
+    return $self; 
 }
 
-# just in case there's any memory leaks
+# just in case there are any memory leaks
 sub DESTROY {
     my $self = shift;
     return unless $self;
@@ -256,20 +256,20 @@ sub read { die "call _init_read_sub first"; };
 
 sub _init_read_sub {
     my $self = shift;
-    my $details        = $self -> {'data'};
-    my $channels       = $details -> {'channels'};
-    my $block          = $details -> {'block_align'};
-    my $handle         = $self -> {'handle'};
-    my ($read_op, $read_op_c);
+    my $handle     = $self -> {'handle'};
+    my $details    = $self -> {'data'};
+    my $channels   = $details -> {'channels'};
+    my $block      = $details -> {'block_align'};
+    my $read_op;
     if ( $details -> {'bits_sample'} <= 8 ) {
         my $offset = ( 2 ** $details -> {'bits_sample'} ) / 2;
-        $read_op = q{ return map $_ - $offset, unpack( 'C'.$channels, shift() ) };
+        $read_op = q{ return map $_ - } . $offset . q{, unpack( 'C'.$channels, $val ) };
     } else {
         if ( $self -> {'tools'} -> is_big_endian() ) {
             $read_op = q{
-                return unpack( 's' . $channels,             # 3. unpack native as signed short
-                    pack( 'S' . $channels,                  # 2. pack native unsigned short
-                        unpack( 'v' . $channels, shift() )  # 1. unpack little-endian unsigned short
+                return unpack( 's' . $channels,          # 3. unpack native as signed short
+                    pack( 'S' . $channels,               # 2. pack native unsigned short
+                        unpack( 'v' . $channels, $val )  # 1. unpack little-endian unsigned short
                     )
                 );
             };
@@ -280,8 +280,6 @@ sub _init_read_sub {
     $self -> {'read_sub_string'} = q[
         sub {
             my $val;
-### unnecessary - read() deals with this case already
-#           return () if $self -> {'pos'} + $block > $self -> {'data'} -> {'data_finish'};
             $self -> {'pos'} += read( $handle, $val, $block );
             return () unless defined( $val );
             ] . $read_op . q[
@@ -724,6 +722,7 @@ sub _error {
 
 =head1 AUTHORS
 
+    Brian Szymanski <ski-cpan@allafrica.com> (0.07-0.08)
     Nick Peskett (see http://www.peskett.co.uk/ for contact details).
     Kurt George Gjerde <kurt.gjerde@media.uib.no>. (0.02-0.03)
 

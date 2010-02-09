@@ -4,7 +4,7 @@ use strict;
 use Audio::Wav::Tools;
 
 use vars qw( $VERSION );
-$VERSION = '0.07';
+$VERSION = '0.08';
 
 =head1 NAME
 
@@ -201,6 +201,7 @@ sub set_error_handler {
 
 =head1 AUTHORS
 
+    Brian Szymanski <ski-cpan@allafrica.com> (0.07-0.08)
     Nick Peskett (see http://www.peskett.co.uk/ for contact details).
     Kurt George Gjerde <kurt.gjerde@media.uib.no>. (0.02-0.03)
 

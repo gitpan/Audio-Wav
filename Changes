@@ -46,3 +46,6 @@ Revision history for Perl extension Audio::Wav.
   - use Inline::C (if available) to increase read speed by a factor of ~2.3
   - experimental support for reading 24- and 32- bit data (suspected to
     work on little endian machines that use Inline::C)
+
+0.08  Sun Feb 09 06:29:43 GMT 2010
+  - fix regression: read() returned bogus samples when Inline::C not available
