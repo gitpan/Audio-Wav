@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------
-                  README file for Audio::Wav (0.06).
+                  README file for Audio::Wav (0.09).
 ---------------------------------------------------------------------
 
 Modules for reading & writing Microsoft WAV files.
@@ -447,8 +447,9 @@ METHODS
                               AUTHORS
 ---------------------------------------------------------------------
 
-    Brian Szymanski <ski-cpan@allafrica.com> (0.07-0.08)
     Nick Peskett (see http://www.peskett.co.uk/ for contact details).
+    Brian Szymanski <ski-cpan@allafrica.com> (0.07-0.09)
+    Wolfram humann (pureperl 24 and 32 bit read support in 0.09)
     Kurt George Gjerde <kurt.gjerde@media.uib.no>. (0.02-0.03)
 
 ---------------------------------------------------------------------

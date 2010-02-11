@@ -22,9 +22,9 @@ print "1..4\n\n";
 print "\nTesting wav creation\n";
 
 my %wav_options = ( # these are optional & default to 0
-    '.01compatible'	=> 0,
-    'oldcooledithack'	=> 0,
-    'debug'		=> 0,
+    '.01compatible'   => 0,
+    'oldcooledithack' => 0,
+    'debug'           => 0,
 );
 
 
@@ -80,6 +80,8 @@ $cnt ++;
 print "ok $cnt\n";
 
 ### Wav Copying
+
+print "\nNOTE: ".($Audio::Wav::_has_inline ? 'YES' : 'NOT')." using inline";
 
 print "\nTesting wav copying and shortcut syntax\n";
 

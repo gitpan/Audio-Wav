@@ -1,10 +1,21 @@
 package Audio::Wav;
 
 use strict;
+eval { require warnings; }; #it's ok if we can't load warnings
+
 use Audio::Wav::Tools;
 
 use vars qw( $VERSION );
-$VERSION = '0.08';
+$VERSION = '0.09';
+
+BEGIN {
+    eval { require Inline::C };
+    if($@) {
+        $Audio::Wav::_has_inline = 0;
+    } else {
+        $Audio::Wav::_has_inline = 1;
+    }
+}
 
 =head1 NAME
 
@@ -102,10 +113,10 @@ All the parameters are optional and default to 0
 =cut
 
 sub new {
-    my $class = shift;
-    my $tools = Audio::Wav::Tools -> new( @_ );
-    my $self =	{
-	'tools'		=> $tools,
+    my ($class, @args) = @_;
+    my $tools = Audio::Wav::Tools -> new( @args );
+    my $self = {
+        'tools' => $tools,
     };
     bless $self, $class;
     return $self;
@@ -116,9 +127,9 @@ sub new {
 Returns a blessed Audio::Wav::Write object.
 
     my $details = {
-	'bits_sample'	=> 16,
-	'sample_rate'	=> 44100,
-	'channels'	=> 2,
+        'bits_sample'	=> 16,
+        'sample_rate'	=> 44100,
+        'channels'	=> 2,
     };
 
     my $write = $wav -> write( 'testout.wav', $details );
@@ -132,15 +143,13 @@ See L<Audio::Wav::Write> for methods.
 =cut
 
 sub write {
-    my $self = shift;
-    my $file = shift;
-    my $details = shift;
+    my ($self, $file, $details, @args) = @_;
     require Audio::Wav::Write;
     my $write;
     if(ref($self)) {
         $write = Audio::Wav::Write -> new( $file, $details, $self -> {'tools'} );
     } else {
-        $write = Audio::Wav::Write -> new( $file, Audio::Wav::Tools -> new( @_ ) );
+        $write = Audio::Wav::Write -> new( $file, Audio::Wav::Tools -> new( @args ) );
     }
     return $write; 
 }
@@ -160,14 +169,13 @@ See L<Audio::Wav::Read> for methods.
 =cut
 
 sub read {
-    my $self = shift;
-    my $file = shift;
+    my ($self, $file, @args) = @_;
     require Audio::Wav::Read;
     my $read;
     if(ref($self)) {
         $read = Audio::Wav::Read -> new( $file, $self -> {'tools'} );
     } else {
-        $read = Audio::Wav::Read -> new( $file, Audio::Wav::Tools -> new( @_ ) );
+        $read = Audio::Wav::Read -> new( $file, Audio::Wav::Tools -> new( @args ) );
     }
     return $read; 
 }
@@ -180,14 +188,14 @@ The subroutine should take a hash as input. The keys in the hash are 'filename',
 If no error handler is set, die and warn will be used.
 
     sub myErrorHandler {
-	my( %parameters ) = @_;
-	if ( $parameters{'warning'} ) {
-	    # This is a non-critical warning
-	    warn "Warning: $parameters{'filename'}: $parameters{'message'}\n";
-	} else {
-	    # Critical error!
-	    die "ERROR: $parameters{'filename'}: $parameters{'message'}\n";
-	}
+        my( %parameters ) = @_;
+        if ( $parameters{'warning'} ) {
+            # This is a non-critical warning
+            warn "Warning: $parameters{'filename'}: $parameters{'message'}\n";
+        } else {
+            # Critical error!
+            die "ERROR: $parameters{'filename'}: $parameters{'message'}\n";
+        }
     }
     $wav -> set_error_handler( \&myErrorHandler );
 
@@ -195,14 +203,15 @@ If no error handler is set, die and warn will be used.
 =cut
 
 sub set_error_handler {
-    my $self = shift;
-    $self -> {'tools'} -> set_error_handler( @_ );
+    my ($self, @args) = @_;
+    $self -> {'tools'} -> set_error_handler( @args );
 }
 
 =head1 AUTHORS
 
-    Brian Szymanski <ski-cpan@allafrica.com> (0.07-0.08)
     Nick Peskett (see http://www.peskett.co.uk/ for contact details).
+    Brian Szymanski <ski-cpan@allafrica.com> (0.07-0.09)
+    Wolfram humann (pureperl 24 and 32 bit read support in 0.09)
     Kurt George Gjerde <kurt.gjerde@media.uib.no>. (0.02-0.03)
 
 =cut

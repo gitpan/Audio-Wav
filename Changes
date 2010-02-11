@@ -47,5 +47,13 @@ Revision history for Perl extension Audio::Wav.
   - experimental support for reading 24- and 32- bit data (suspected to
     work on little endian machines that use Inline::C)
 
-0.08  Sun Feb 09 06:29:43 GMT 2010
+0.08  Tue Feb 09 06:29:43 GMT 2010
   - fix regression: read() returned bogus samples when Inline::C not available
+
+0.09  Thu Feb 11 14:58:37 GMT 2010
+  - Support 24 and 32 bit wav reading w/o Inline::C (from Wolfram humann)
+    ( see https://rt.cpan.org/Public/Bug/Display.html?id=36452 )
+  - add a META.yml and some other easy kwalitee tweaks
+  - Audio::Wav::Read::_has_inline moved to Audio::Wav::_has_inline so
+    it can be queried before instantiating a reader (and later be used
+    internally for Audio::Wav::Write)

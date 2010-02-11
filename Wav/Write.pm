@@ -1,11 +1,13 @@
 package Audio::Wav::Write;
 
 use strict;
+eval { require warnings; }; #it's ok if we can't load warnings
+
 use FileHandle;
 use Audio::Wav::Write::Header;
 
 use vars qw( $VERSION );
-$VERSION = '0.08';
+$VERSION = '0.09';
 
 =head1 NAME
 
@@ -82,25 +84,25 @@ sub new {
 	$use_cache = 0 if $no_cache;
     }
 
-    my $self =	{
-	'use_cache'	=> $use_cache,
-	'write_cache'	=> undef,
-	'out_file'	=> $out_file,
-	'cache_size'	=> 4096,
-	'handle'	=> $handle,
-	'details'	=> $details,
-	'block_align'	=> $details -> {'block_align'},
-	'tools'		=> $tools,
-	'done_finish'	=> 0,
+    my $self = {
+        'use_cache'   => $use_cache,
+        'write_cache' => undef,
+        'out_file'    => $out_file,
+        'cache_size'  => 4096,
+        'handle'      => $handle,
+        'details'     => $details,
+        'block_align' => $details -> {'block_align'},
+        'tools'       => $tools,
+        'done_finish' => 0,
     };
 
     bless $self, $class;
 
     unless ( defined $handle ) {
-	my $error = $!;
-	chomp( $error );
-	$self -> _error( "unable to open file ($error)" );
-	return $self;
+        my $error = $!;
+        chomp( $error );
+        $self -> _error( "unable to open file ($error)" );
+        return $self;
     }
 
     binmode $handle;
@@ -110,12 +112,12 @@ sub new {
     $self -> _examine_details( $details );
 
     if ( $self -> {'details'} -> {'bits_sample'} <= 8 ) {
-	$self -> {'use_offset'} = ( 2 ** $self -> {'details'} -> {'bits_sample'} ) / 2;
+        $self -> {'use_offset'} = ( 2 ** $self -> {'details'} -> {'bits_sample'} ) / 2;
     } else {
-	$self -> {'use_offset'} = 0;
+        $self -> {'use_offset'} = 0;
     }
 
-    return $self;
+    return $self; 
 }
 
 sub DESTROY {
@@ -157,12 +159,12 @@ sub add_cue {
     my $note = shift;
     my $block_align = $self -> {'details'} -> {'block_align'};
     if ( defined $pos ) {
-	$pos /= $block_align if $self -> {'tools'} -> is_01compatible();
+        $pos /= $block_align if $self -> {'tools'} -> is_01compatible();
     } else {
-	$pos = $self -> {'pos'} / $block_align;
+        $pos = $self -> {'pos'} / $block_align;
     }
     my $output = {
-	'pos'	=> $pos,
+        'pos' => $pos,
     };
     $output -> {'label'} = $label if $label;
     $output -> {'note'} = $note if $note;
@@ -174,22 +176,22 @@ sub add_cue {
 All parameters are optional.
 
     my %info = (
-	'midi_pitch_fraction'	=> 0,
-	'smpte_format'		=> 0,
-	'smpte_offset'		=> 0,
-	'product'		=> 0,
-	'sample_period'		=> 0,
-	'manufacturer'		=> 0,
-	'sample_data'		=> 0,
-	'midi_unity_note'	=> 65,
+        'midi_pitch_fraction' => 0,
+        'smpte_format'        => 0,
+        'smpte_offset'        => 0,
+        'product'             => 0,
+        'sample_period'       => 0,
+        'manufacturer'        => 0,
+        'sample_data'         => 0,
+        'midi_unity_note'     => 65,
     );
     $write -> set_sampler_info( %info );
 
 =cut
 
 sub set_sampler_info {
-    my $self = shift;
-    return $self -> {'header'} -> set_sampler_info( @_ );
+    my ($self, @args) = @_;
+    return $self -> {'header'} -> set_sampler_info( @args );
 }
 
 =head2 add_sampler_loop
@@ -209,8 +211,8 @@ All parameters are optional except start & end.
 =cut
 
 sub add_sampler_loop {
-    my $self = shift;
-    return $self -> {'header'} -> add_sampler_loop( @_ );
+    my ($self, @args) = @_;
+    return $self -> {'header'} -> add_sampler_loop( @args );
 }
 
 =head2 add_display
@@ -218,8 +220,8 @@ sub add_sampler_loop {
 =cut
 
 sub add_display {
-    my $self = shift;
-    return $self -> {'header'} -> add_display( @_ );
+    my ($self, @args) = @_;
+    return $self -> {'header'} -> add_display( @args );
 }
 
 =head2 set_info
@@ -231,8 +233,7 @@ Sets information to be contained in the wav file.
 =cut
 
 sub set_info {
-    my $self = shift;
-    my %info = @_;
+    my ($self, %info) = @_;
     $self -> {'details'} -> {'info'} = { %{ $self -> {'details'} -> {'info'} }, %info };
 }
 
@@ -258,17 +259,17 @@ Adds a sample to the current file.
 Each element in @sample_channels should be in the range of;
 
     where $samp_max = ( 2 ** bits_per_sample ) / 2
-    -$samp_max to +$samp_max
+    -$samp_max to +$samp_max 
 
 =cut
 
 sub write {
-    my $self = shift;
+    my ($self, @args) = @_;
     my $channels = $self -> {'details'} -> {'channels'};
     if ( $self -> {'use_offset'} ) {
-	return $self -> write_raw( pack( 'C'.$channels , map $_ + $self -> {'use_offset'}, @_ ) );
+        return $self -> write_raw( pack( 'C'.$channels, map { $_ + $self -> {'use_offset'} } @args ) );
     } else {
-	return $self -> write_raw( pack( 'v'.$channels, @_ ) );
+        return $self -> write_raw( pack( 'v'.$channels, @args ) );
     }
 }
 
@@ -293,15 +294,15 @@ sub write_raw {
     return unless $len;
     my $wrote = $len;
     if ( $self -> {'use_cache'} ) {
-	$self -> {'write_cache'} .= $data;
-	my $cache_len = length( $self -> {'write_cache'} );
-	$self -> _purge_cache( $cache_len ) unless $cache_len < $self -> {'cache_size'};
+        $self -> {'write_cache'} .= $data;
+        my $cache_len = length( $self -> {'write_cache'} );
+        $self -> _purge_cache( $cache_len ) unless $cache_len < $self -> {'cache_size'};
     } else {
-	$wrote = syswrite $self -> {'handle'}, $data, $len;
+        $wrote = syswrite $self -> {'handle'}, $data, $len;
     }
 
     $self -> {'pos'} += $wrote;
-    return $wrote;
+    return $wrote; 
 }
 
 =head2 write_raw_samples
@@ -318,8 +319,8 @@ Where;
 =cut
 
 sub write_raw_samples {
-    my $self = shift;
-    my $written = $self -> write_raw( @_ );
+    my ($self, @args) = @_;
+    my $written = $self -> write_raw( @args );
     return $written / $self -> {'details'} -> {'block_align'};
 }
 
@@ -327,7 +328,7 @@ sub write_raw_samples {
 
 sub _start_file {
     my $self = shift;
-    my( $file, $details, $tools, $handle ) = map $self -> {$_}, qw( out_file details tools handle );
+    my( $file, $details, $tools, $handle ) = map { $self -> {$_} } qw( out_file details tools handle );
     my $header = Audio::Wav::Write::Header -> new( $file, $details, $tools, $handle );
     $self -> {'header'} = $header;
     my $data = $header -> start();
@@ -354,69 +355,69 @@ sub _init {
     my @wanted = ( 'block_align', 'bytes_sec', 'info', 'wave-ex' );
 
     foreach my $need ( @needed ) {
-	if ( exists( $details -> {$need} ) && $details -> {$need} ) {
-	    $output -> {$need} = $details -> {$need};
-	} else {
-	    push @missing, $need;
-	}
+        if ( exists( $details -> {$need} ) && $details -> {$need} ) {
+            $output -> {$need} = $details -> {$need};
+        } else {
+            push @missing, $need;
+        }
     }
     return $self -> _error("I need the following parameters supplied: " . join( ', ', @missing ) ) if @missing;
     foreach my $want ( @wanted ) {
-	next unless ( exists( $details -> {$want} ) && $details -> {$want} );
-	$output -> {$want} = $details -> {$want};
+        next unless ( exists( $details -> {$want} ) && $details -> {$want} );
+        $output -> {$want} = $details -> {$want};
     }
     unless ( exists $details -> {'block_align'} ) {
-	my( $channels, $bits ) = map $output -> {$_}, qw( channels bits_sample );
-	my $mod_bits = $bits % 8;
-	$mod_bits = 1 if $mod_bits;
-	$mod_bits += int( $bits / 8 );
-	$output -> {'block_align'} = $channels * $mod_bits;
+        my( $channels, $bits ) = map { $output -> {$_} } qw( channels bits_sample );
+        my $mod_bits = $bits % 8;
+        $mod_bits = 1 if $mod_bits;
+        $mod_bits += int( $bits / 8 );
+        $output -> {'block_align'} = $channels * $mod_bits;
     }
     unless ( exists $output -> {'bytes_sec'} ) {
-	my( $rate, $block ) = map $output -> {$_}, qw( sample_rate block_align );
-	$output -> {'bytes_sec'} = $rate * $block;
+        my( $rate, $block ) = map { $output -> {$_} } qw( sample_rate block_align );
+        $output -> {'bytes_sec'} = $rate * $block;
     }
     unless ( exists $output -> {'info'} ) {
-	$output -> {'info'} = {};
+        $output -> {'info'} = {};
     }
 
-    $self -> {'details'} = $output;
+    $self -> {'details'} = $output; 
 }
 
 sub _examine_details {
     my $self = shift;
     my $details = shift;
-    my( $cue, $label, $note )
-	= map exists( $details -> {$_} ) ? $details -> {$_} : {},
-	qw( cue labl note );
+    my( $cue, $label, $note ) =
+        map { exists( $details -> {$_} ) ? $details -> {$_} : {} }
+        qw( cue labl note );
     my $block_align = $self -> {'details'} -> {'block_align'};
     my $tools = $self -> {'tools'};
-    foreach my $id ( sort keys %$cue ) {      # <-- Thanks to jeremyd713@hotmail.com
-	my $pos = $cue -> {$id} -> {'position'};
-	$pos *= $block_align if $tools -> is_01compatible();
-	my( $in_label, $in_note )
-	    = map exists( $_ -> {$id} ) ? $_ -> {$id} : '',
-	    $label, $note;
-	$self -> add_cue( $pos, $in_label, $in_note );
+    foreach my $id ( sort keys %{$cue} ) {       # <-- Thanks to jeremyd713@hotmail.com
+        my $pos = $cue -> {$id} -> {'position'};
+        $pos *= $block_align if $tools -> is_01compatible();
+        my( $in_label, $in_note ) = 
+            map { exists( $_ -> {$id} ) ? $_ -> {$id} : '' }
+            ( $label, $note );
+        $self -> add_cue( $pos, $in_label, $in_note );
     }
     if ( exists $details -> {'sampler'} ) {
-	my $sampler = $details -> {'sampler'};
-	my $loops = delete( $sampler -> {'loop'} );
-	$self -> set_sampler_info( %$sampler );
-	foreach my $loop ( @$loops ) {
-	    $self -> add_sampler_loop( %$loop );
-	}
+        my $sampler = $details -> {'sampler'};
+        my $loops = delete( $sampler -> {'loop'} );
+        $self -> set_sampler_info( %{$sampler} );
+        foreach my $loop ( @{$loops} ) {
+            $self -> add_sampler_loop( %{$loop} );
+        }
     }
     if ( exists $details -> {'display'} ) {
-	my @display = @{ $details -> {'display'} };
-	my @fields = qw( id data );
-	$self -> add_display( map { $fields[$_] => $display[$_] } 0, 1 );
+        my @display = @{ $details -> {'display'} };
+        my @fields = qw( id data );
+        $self -> add_display( map { $fields[$_] => $display[$_] } 0, 1 );
     }
 }
 
 sub _error {
-    my $self = shift;
-    return $self -> {'tools'} -> error( $self -> {'out_file'}, @_ );
+    my ($self, @args) = @_;
+    return $self -> {'tools'} -> error( $self -> {'out_file'}, @args );
 }
 
 =head1 AUTHORS

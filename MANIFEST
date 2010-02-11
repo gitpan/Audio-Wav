@@ -2,7 +2,9 @@ Changes
 MANIFEST
 README
 LICENSE
+META.yml
 Makefile.PL
+TODO
 Wav.pm
 test.pl
 test_tone.wav
@@ -10,4 +12,3 @@ Wav/Read.pm
 Wav/Write.pm
 Wav/Tools.pm
 Wav/Write/Header.pm
-META.yml                                 Module meta-data (added by MakeMaker)
