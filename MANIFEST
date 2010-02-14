@@ -1,3 +1,4 @@
+COPYRIGHT
 Changes
 MANIFEST
 README
@@ -12,3 +13,7 @@ Wav/Read.pm
 Wav/Write.pm
 Wav/Tools.pm
 Wav/Write/Header.pm
+xt/perlcritic.t
+xt/pod-coverage.t
+xt/pod.t
+

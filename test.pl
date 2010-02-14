@@ -17,6 +17,8 @@ my $cnt = 0;
 
 print "1..4\n\n";
 
+print "NOTE: ".($Audio::Wav::_has_inline ? 'YES' : 'NOT')." using inline\n";
+
 ### Wav Creation
 
 print "\nTesting wav creation\n";
@@ -80,8 +82,6 @@ $cnt ++;
 print "ok $cnt\n";
 
 ### Wav Copying
-
-print "\nNOTE: ".($Audio::Wav::_has_inline ? 'YES' : 'NOT')." using inline";
 
 print "\nTesting wav copying and shortcut syntax\n";
 

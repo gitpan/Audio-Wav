@@ -7,7 +7,7 @@ use FileHandle;
 use Audio::Wav::Write::Header;
 
 use vars qw( $VERSION );
-$VERSION = '0.09';
+$VERSION = '0.10';
 
 =head1 NAME
 
@@ -79,9 +79,9 @@ sub new {
     my $handle = new FileHandle ">$out_file";
 
     my $use_cache = 1;
-    if ( ref( $details ) eq 'HASH' && exists( $details -> {'no_cache'} ) ) {
-	my $no_cache = delete $details -> {'no_cache'};
-	$use_cache = 0 if $no_cache;
+    if ( ref $details eq 'HASH' && exists $details -> {'no_cache'} ) {
+        my $no_cache = delete $details -> {'no_cache'};
+        $use_cache = 0 if $no_cache;
     }
 
     my $self = {
@@ -100,7 +100,7 @@ sub new {
 
     unless ( defined $handle ) {
         my $error = $!;
-        chomp( $error );
+        chomp $error;
         $self -> _error( "unable to open file ($error)" );
         return $self;
     }
@@ -267,9 +267,9 @@ sub write {
     my ($self, @args) = @_;
     my $channels = $self -> {'details'} -> {'channels'};
     if ( $self -> {'use_offset'} ) {
-        return $self -> write_raw( pack( 'C'.$channels, map { $_ + $self -> {'use_offset'} } @args ) );
+        return $self -> write_raw( pack 'C'.$channels, map { $_ + $self -> {'use_offset'} } @args );
     } else {
-        return $self -> write_raw( pack( 'v'.$channels, @args ) );
+        return $self -> write_raw( pack 'v'.$channels, @args );
     }
 }
 
@@ -290,12 +290,12 @@ sub write_raw {
     my $self = shift;
     my $data = shift;
     my $len = shift;
-    $len = length( $data ) unless $len;
+    $len = length $data unless $len;
     return unless $len;
     my $wrote = $len;
     if ( $self -> {'use_cache'} ) {
         $self -> {'write_cache'} .= $data;
-        my $cache_len = length( $self -> {'write_cache'} );
+        my $cache_len = length $self -> {'write_cache'};
         $self -> _purge_cache( $cache_len ) unless $cache_len < $self -> {'cache_size'};
     } else {
         $wrote = syswrite $self -> {'handle'}, $data, $len;
@@ -341,8 +341,8 @@ sub _purge_cache {
     my $len = shift;
     return unless $self -> {'write_cache'};
     my $cache = $self -> {'write_cache'};
-    $len = length( $cache ) unless $len;
-    my $res = syswrite( $self -> {'handle'}, $cache, $len );
+    $len = length $cache unless $len;
+    my $res = syswrite $self -> {'handle'}, $cache, $len;
     $self -> {'write_cache'} = undef;
 }
 
@@ -351,8 +351,8 @@ sub _init {
     my $details = $self -> {'details'};
     my $output = {};
     my @missing;
-    my @needed = ( 'bits_sample', 'channels', 'sample_rate' );
-    my @wanted = ( 'block_align', 'bytes_sec', 'info', 'wave-ex' );
+    my @needed = qw ( bits_sample channels sample_rate );
+    my @wanted = qw ( block_align bytes_sec info wave-ex );
 
     foreach my $need ( @needed ) {
         if ( exists( $details -> {$need} ) && $details -> {$need} ) {
@@ -361,16 +361,15 @@ sub _init {
             push @missing, $need;
         }
     }
-    return $self -> _error("I need the following parameters supplied: " . join( ', ', @missing ) ) if @missing;
+    return $self -> _error('I need the following parameters supplied: ' . join ', ', @missing ) if @missing;
     foreach my $want ( @wanted ) {
         next unless ( exists( $details -> {$want} ) && $details -> {$want} );
         $output -> {$want} = $details -> {$want};
     }
     unless ( exists $details -> {'block_align'} ) {
         my( $channels, $bits ) = map { $output -> {$_} } qw( channels bits_sample );
-        my $mod_bits = $bits % 8;
-        $mod_bits = 1 if $mod_bits;
-        $mod_bits += int( $bits / 8 );
+        my $mod_bits = $bits % 8 ? 1 : 0;
+        $mod_bits += int $bits / 8;
         $output -> {'block_align'} = $channels * $mod_bits;
     }
     unless ( exists $output -> {'bytes_sec'} ) {
@@ -402,7 +401,7 @@ sub _examine_details {
     }
     if ( exists $details -> {'sampler'} ) {
         my $sampler = $details -> {'sampler'};
-        my $loops = delete( $sampler -> {'loop'} );
+        my $loops = delete $sampler -> {'loop'};
         $self -> set_sampler_info( %{$sampler} );
         foreach my $loop ( @{$loops} ) {
             $self -> add_sampler_loop( %{$loop} );

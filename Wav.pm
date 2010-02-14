@@ -6,7 +6,7 @@ eval { require warnings; }; #it's ok if we can't load warnings
 use Audio::Wav::Tools;
 
 use vars qw( $VERSION );
-$VERSION = '0.09';
+$VERSION = '0.10';
 
 BEGIN {
     eval { require Inline::C };
@@ -34,13 +34,13 @@ Audio::Wav - Modules for reading & writing Microsoft WAV files.
     my $data;
     #read 512 bytes
     while ( defined( $data = $read -> read_raw( 512 ) ) ) {
-	$write -> write_raw( $data );
+        $write -> write_raw( $data );
     }
     my $length = $read -> length_samples();
     my( $third, $half, $twothirds ) = map int( $length / $_ ), ( 3, 2, 1.5 );
     my %samp_loop = (
-	'start'	=> $third,
-	'end'	=> $twothirds,
+        'start' => $third,
+        'end'   => $twothirds,
     );
     $write -> add_sampler_loop( %samp_loop );
     $write -> add_cue( $half, "cue label 1", "cue note 1" );
@@ -56,20 +56,20 @@ Audio::Wav - Modules for reading & writing Microsoft WAV files.
     my @out_files;
     my $in_channels = $details -> {'channels'};
     foreach my $channel ( 1 .. $in_channels ) {
-	push @out_files, $wav -> write( 'multi_' . $channel . '.wav', \%out_details );
+        push @out_files, $wav -> write( 'multi_' . $channel . '.wav', \%out_details );
     }
 
     while ( 1 ) {
-	my @channels = $read -> read();
-	last unless @channels;
-	foreach my $channel_id ( 0 .. $#channels ) {
-	    $out_files[$channel_id] -> write( $channels[$channel_id] );
-	}
+        my @channels = $read -> read();
+        last unless @channels;
+        foreach my $channel_id ( 0 .. $#channels ) {
+            $out_files[$channel_id] -> write( $channels[$channel_id] );
+        }
     }
 
     # not entirely neccessary as finish is done in DESTROY now (if the file hasn't been finished already).
     foreach my $write ( @out_files ) {
-	$write -> finish();
+        $write -> finish();
     }
 
 
@@ -104,9 +104,9 @@ Returns a blessed Audio::Wav object.
 All the parameters are optional and default to 0
 
     my %options = (
-	'.01compatible'		=> 0,
-	'oldcooledithack'	=> 0,
-	'debug'			=> 0,
+        '.01compatible'   => 0,
+        'oldcooledithack' => 0,
+        'debug'           => 0,
     );
     my $wav = Audio::Wav -> new( %options );
 
@@ -119,7 +119,7 @@ sub new {
         'tools' => $tools,
     };
     bless $self, $class;
-    return $self;
+    return $self; 
 }
 
 =head2 write
@@ -146,7 +146,7 @@ sub write {
     my ($self, $file, $details, @args) = @_;
     require Audio::Wav::Write;
     my $write;
-    if(ref($self)) {
+    if(ref $self) {
         $write = Audio::Wav::Write -> new( $file, $details, $self -> {'tools'} );
     } else {
         $write = Audio::Wav::Write -> new( $file, Audio::Wav::Tools -> new( @args ) );
@@ -172,7 +172,7 @@ sub read {
     my ($self, $file, @args) = @_;
     require Audio::Wav::Read;
     my $read;
-    if(ref($self)) {
+    if(ref $self) {
         $read = Audio::Wav::Read -> new( $file, $self -> {'tools'} );
     } else {
         $read = Audio::Wav::Read -> new( $file, Audio::Wav::Tools -> new( @args ) );
@@ -207,10 +207,16 @@ sub set_error_handler {
     $self -> {'tools'} -> set_error_handler( @args );
 }
 
+=head1 COPYRIGHT
+
+    Copyright (c) 2010 Brian Szymanski <ski-cpan@allafrica.com>
+    Copyright (c) 1999-2001,2004-2006 Nick Peskett (http://www.peskett.co.uk/)
+    Copyright (c) 2004 Kurt George Gjerde <KJERDE@cpan.org>
+
 =head1 AUTHORS
 
     Nick Peskett (see http://www.peskett.co.uk/ for contact details).
-    Brian Szymanski <ski-cpan@allafrica.com> (0.07-0.09)
+    Brian Szymanski <ski-cpan@allafrica.com> (0.07-0.10)
     Wolfram humann (pureperl 24 and 32 bit read support in 0.09)
     Kurt George Gjerde <kurt.gjerde@media.uib.no>. (0.02-0.03)
 

@@ -4,7 +4,7 @@ use strict;
 eval { require warnings; }; #it's ok if we can't load warnings
 
 use vars qw( $VERSION );
-$VERSION = '0.09';
+$VERSION = '0.10';
 
 sub new {
     my ($class, %options) = @_;
@@ -77,7 +77,7 @@ sub get_info_fields {
 
 sub get_rev_info_fields {
     my $self = shift;
-    return %{ $self -> {'rev_info_fields'} } if exists( $self -> {'rev_info_fields'} );
+    return %{ $self -> {'rev_info_fields'} } if exists $self -> {'rev_info_fields'};
     my %info_fields = $self -> get_info_fields();
     my %rev_info;
     foreach my $key ( keys %info_fields ) {
