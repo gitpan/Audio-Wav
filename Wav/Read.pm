@@ -6,7 +6,7 @@ eval { require warnings; }; #it's ok if we can't load warnings
 use FileHandle;
 
 use vars qw( $VERSION );
-$VERSION = '0.10';
+$VERSION = '0.11';
 
 =head1 NAME
 
@@ -743,7 +743,7 @@ sub _error {
 =head1 AUTHORS
 
     Nick Peskett (see http://www.peskett.co.uk/ for contact details).
-    Brian Szymanski <ski-cpan@allafrica.com> (0.07-0.10)
+    Brian Szymanski <ski-cpan@allafrica.com> (0.07-0.11)
     Wolfram humann (pureperl 24 and 32 bit read support in 0.09)
     Kurt George Gjerde <kurt.gjerde@media.uib.no>. (0.02-0.03)
 
@@ -752,6 +752,20 @@ sub _error {
 1;
 
 __DATA__
+
+#ifdef WIN32
+  // Note: if it becomes a problem that Visual Studio 6 and
+  // Embedded Visual C++ 4 dont realize that char has the same
+  // size as int8_t, check for #if (_MSC_VER < 1300) and use
+  // signed __int8, unsigned __int16, etc. as in:
+  // http://msinttypes.googlecode.com/svn/trunk/stdint.h
+  typedef signed char       int8_t;
+  typedef signed short      int16_t;
+  typedef signed int        int32_t;
+  typedef unsigned char     uint8_t;
+  typedef unsigned short    uint16_t;
+  typedef unsigned int      uint32_t;
+#endif
 
 //NOTE: 16, 32 bit audio do *NOT* work on big-endian platforms yet!
 //verified formats (output is identical output to pureperl):
@@ -793,9 +807,11 @@ void init(FILE *fh, int ss, int ch, int be) {
 void read_c(void *self) {
     int samples[MAX_CHANNELS];
     int nread;
+    int i, s;
+
     Inline_Stack_Vars;
     Inline_Stack_Reset;
-    int i, s;
+
     for(i=0; i<channels; i++) {
         // having fread in the loop is probably slightly less efficient,
         // but it avoids byte alignment problems and fread is buffered,

@@ -1,3 +1,29 @@
+- int32_t/uint32_t/int16_t/int8_t not found on win32 - just use stdint.h?
+  or inttypes.h (only if on win32)
+    (02:11:21 AM) brianski: is there an equivalent to unit8_t, uint32_t, etc. on windows?
+    (02:16:30 AM) brianski: i have a perl module with some inline C code, and the ms c compiler is complaining about not grokking uint8_t, etc.
+    (02:17:04 AM) zen_: brianski: do you have an inttypes.h included?
+    (02:17:58 AM) brianski: zen_: dunno, don't have access to the build setup on that machine - someone else did it and reported the error
+    (02:18:12 AM) brianski: err oh in my code. isn't inttypes.h relatively new (C99) ?
+    (02:18:34 AM) brianski: i suppose i could do #ifdef win32 \n #include inttypes.h \n #endif
+    (02:18:46 AM) twkm: brianski: indeed.
+    (02:20:43 AM) brianski: anyone know offhand if inttypes.h well established enough on windows that i can compile on XP ?
+    (02:21:03 AM) twkm: doesn't exist at all on windows.
+    (02:21:37 AM) Zhivago: Well, msvc doesn't support C99.
+    (02:21:43 AM) Zhivago: You could use gcc under windows, I guess.
+    (02:22:28 AM) brianski: twkm: eh?
+    (02:24:00 AM) brianski: i think i missed something -- i didn't #include <inttypes.h> at all - does win32 have a <stdint.h> ? and/or is there a way to get similar functionality?
+    (02:24:52 AM) brianski: also, i read somewhere that i can get a free ms c compiler? anyone know where i should look for that?
+    (02:25:17 AM) twkm: brianski: you might replace uint8_t with a type that is present.
+    (02:25:47 AM) brianski: twkm: oh i misread what zen_ said, i thought he was saying those types did exist on win32
+    (02:26:26 AM) zen_: an implementation using win32 as an environment may have inttypes.h
+    (02:26:41 AM) zen_: Like mingw/gcc, as Zhivago said.
+    (02:26:43 AM) twkm: the default implementation for ms windows does not.
+    (02:26:43 AM) brianski: i see so something like this should work for me: http://msinttypes.googlecode.com/svn/trunk/stdint.h
+    (02:26:54 AM) zen_: twkm: what's the default implementation?
+    (02:27:11 AM) brianski: zen_: yeah, i dont control what compiler people use to try my code unfortunately -- ideally it should work with msvc and gcc
+    (02:27:13 AM) twkm: *chortles -- you can add a header, but not replace a type with something less annoying.*
+    (02:27:36 AM) twkm: zen_: you would assert it is not msvc?
 - more 24 and 32 bit testing
 - add test cases for 24 and 32 bit reads (remember to check pp and C)
 - check inline::c 24/32 bit reads on big endian platforms

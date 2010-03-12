@@ -1,7 +1,13 @@
 Revision history for Perl extension Audio::Wav.
 
+0.11  Fri Mar 12 04:12:44 GMT 2010
+  - fix two bugs triggered with inline on win32 - one related to assuming 
+    C99 support and one related to lack of stdint.h or equivalent. tested
+    with strawberry perl, should work with msvc too. bug report here:
+    http://www.cpantesters.org/cpan/report/6920668
+
 0.10  Sun Feb 14 04:09:00 GMT 2010
-  - add LICENSE information for debian folks
+  - add COPYRIGHT information for debian folks
   - include xt/
 
 0.09  Thu Feb 11 14:58:37 GMT 2010

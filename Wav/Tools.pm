@@ -4,7 +4,7 @@ use strict;
 eval { require warnings; }; #it's ok if we can't load warnings
 
 use vars qw( $VERSION );
-$VERSION = '0.10';
+$VERSION = '0.11';
 
 sub new {
     my ($class, %options) = @_;

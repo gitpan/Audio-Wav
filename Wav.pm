@@ -6,7 +6,7 @@ eval { require warnings; }; #it's ok if we can't load warnings
 use Audio::Wav::Tools;
 
 use vars qw( $VERSION );
-$VERSION = '0.10';
+$VERSION = '0.11';
 
 BEGIN {
     eval { require Inline::C };
@@ -209,14 +209,14 @@ sub set_error_handler {
 
 =head1 COPYRIGHT
 
-    Copyright (c) 2010 Brian Szymanski <ski-cpan@allafrica.com>
-    Copyright (c) 1999-2001,2004-2006 Nick Peskett (http://www.peskett.co.uk/)
-    Copyright (c) 2004 Kurt George Gjerde <KJERDE@cpan.org>
+    Copyright (c) 2007,2010 Brian Szymanski <brianski@cpan.org>
+    Copyright (c) 1998-2006 Nick Peskett <npeskett@cpan.org> 
+    Copyright (c) 2001 Kurt George Gjerde <KJERDE@cpan.org>
 
 =head1 AUTHORS
 
     Nick Peskett (see http://www.peskett.co.uk/ for contact details).
-    Brian Szymanski <ski-cpan@allafrica.com> (0.07-0.10)
+    Brian Szymanski <ski-cpan@allafrica.com> (0.07-0.11)
     Wolfram humann (pureperl 24 and 32 bit read support in 0.09)
     Kurt George Gjerde <kurt.gjerde@media.uib.no>. (0.02-0.03)
 
