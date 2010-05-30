@@ -6,15 +6,27 @@ eval { require warnings; }; #it's ok if we can't load warnings
 use Audio::Wav::Tools;
 
 use vars qw( $VERSION );
-$VERSION = '0.11';
+$VERSION = '0.12';
 
 BEGIN {
+
     eval { require Inline::C };
     if($@) {
         $Audio::Wav::_has_inline = 0;
     } else {
-        $Audio::Wav::_has_inline = 1;
+        # Inline::C is confused with multiple import calls - it seems to 
+        # result in errors about @INC. hack around this by launching a
+        # seperate process instead of simply checking $@ after:
+        #   eval { Inline->import(C => "int foo() { return 0; }\n"); };
+        my $inline_c_ok = `$^X -e "require Inline::C; eval { Inline->import(C => q[int foo() { return 0; }]) }; print \\\$\@ ? 0 : 1"`;
+        if($inline_c_ok) {
+            $Audio::Wav::_has_inline = 1;
+        } else {
+            warn "Inline::C installed, but your C compiler doesn't seem to work with it\n";
+            $Audio::Wav::_has_inline = 0;
+        }
     }
+
 }
 
 =head1 NAME
@@ -216,7 +228,7 @@ sub set_error_handler {
 =head1 AUTHORS
 
     Nick Peskett (see http://www.peskett.co.uk/ for contact details).
-    Brian Szymanski <ski-cpan@allafrica.com> (0.07-0.11)
+    Brian Szymanski <ski-cpan@allafrica.com> (0.07-0.12)
     Wolfram humann (pureperl 24 and 32 bit read support in 0.09)
     Kurt George Gjerde <kurt.gjerde@media.uib.no>. (0.02-0.03)
 

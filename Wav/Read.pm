@@ -6,7 +6,7 @@ eval { require warnings; }; #it's ok if we can't load warnings
 use FileHandle;
 
 use vars qw( $VERSION );
-$VERSION = '0.11';
+$VERSION = '0.12';
 
 =head1 NAME
 
@@ -743,7 +743,7 @@ sub _error {
 =head1 AUTHORS
 
     Nick Peskett (see http://www.peskett.co.uk/ for contact details).
-    Brian Szymanski <ski-cpan@allafrica.com> (0.07-0.11)
+    Brian Szymanski <ski-cpan@allafrica.com> (0.07-0.12)
     Wolfram humann (pureperl 24 and 32 bit read support in 0.09)
     Kurt George Gjerde <kurt.gjerde@media.uib.no>. (0.02-0.03)
 
@@ -834,7 +834,7 @@ void read_c(void *self) {
                 }
                 s = is_signed ?
                     *((int32_t *)buf) :
-                    *((uint32_t *)buf)-2147483648;
+                    *((uint32_t *)buf) - 0x7fffffff - 1;
                 break;
             case 3:
                 //TODO: test this!
@@ -850,20 +850,20 @@ void read_c(void *self) {
                     }
                 } else {
                     //we *always* return signed data
-                    s -= 8388608;
+                    s += -0x800000;
                 }
                 break;
             case 2: 
                 if(big_end) { s = buf[0]; buf[0] = buf[1]; buf[1] = s; }
                 s = is_signed ?
                     *((int16_t *)buf) :
-                    *((uint16_t *)buf)-32768;
+                    *((uint16_t *)buf) + -0x8000;
                 break;
             case 1:
                 //note: Audio::Wav *always* returns signed data
                 s = is_signed ?
                     *((int8_t *)buf) :
-                    *((uint8_t *)buf)-128;
+                    *((uint8_t *)buf) + -0x80;
                 break;
         }
         sv_setiv(retvals[i], s);

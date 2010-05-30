@@ -1,10 +1,20 @@
 Revision history for Perl extension Audio::Wav.
 
+0.12  Sun May 30 08:45:03 GMT 2010
+  - don't use values > MAXINT. +2147483648 is not a valid unsigned
+    int32 (it's MAXINT+1). while we're at it, put all constants in
+    the XS in hex format for clarity. possibly fixes:
+      http://www.cpantesters.org/cpan/report/6945385
+  - fall back to pureperl when Inline::C is installed but not functional
+    as reported by Michel Lanne.
+
 0.11  Fri Mar 12 04:12:44 GMT 2010
   - fix two bugs triggered with inline on win32 - one related to assuming 
     C99 support and one related to lack of stdint.h or equivalent. tested
     with strawberry perl, should work with msvc too. bug report here:
-    http://www.cpantesters.org/cpan/report/6920668
+      http://www.cpantesters.org/cpan/report/6920668
+    same smoker reports tests with 0.11 here:
+      http://www.cpantesters.org/cpan/report/6930825 
 
 0.10  Sun Feb 14 04:09:00 GMT 2010
   - add COPYRIGHT information for debian folks
