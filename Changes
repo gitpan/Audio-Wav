@@ -1,5 +1,20 @@
 Revision history for Perl extension Audio::Wav.
 
+0.13  Fri Mar 30 21:17:18 GMT 2012
+  - read: don't call close() at DESTROY time when the file handle
+    creationfailed during new() (Murali Ramanathan)
+      https://rt.cpan.org/Ticket/Display.html?id=71462
+  - apply patch to allow read/write of files from handle
+      https://rt.cpan.org/Ticket/Display.html?id=71715
+  - fix problem with $^X under mod_perl (thanks, mario and david!)
+      https://rt.cpan.org/Ticket/Display.html?id=62060
+  - fix bug in perldoc (Sergei Steshenko)
+      https://rt.cpan.org/Ticket/Display.html?id=57114
+  - fix problem with writing 24,32 bps files reported by Sergei Steshenko:
+      http://rt.cpan.org/Public/Bug/Display.html?id=57093
+  - spelling fixes from debian
+      http://rt.cpan.org/Public/Bug/Display.html?id=69644
+
 0.12  Sun May 30 08:45:03 GMT 2010
   - don't use values > MAXINT. +2147483648 is not a valid unsigned
     int32 (it's MAXINT+1). while we're at it, put all constants in

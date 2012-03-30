@@ -6,7 +6,7 @@ eval { require warnings; }; #it's ok if we can't load warnings
 use FileHandle;
 
 use vars qw( $VERSION );
-$VERSION = '0.12';
+$VERSION = '0.13';
 
 =head1 NAME
 
@@ -47,7 +47,8 @@ sub new {
     my $tools = shift;
     $file =~ s#//#/#g;
     my $size = -s $file;
-    my $handle = new FileHandle "<$file";
+
+    my $handle = (ref $file eq 'GLOB') ? $file : new FileHandle "<$file";
 
     my $self = {
         'real_size' => $size,
@@ -76,10 +77,10 @@ sub new {
         }
     }
 
-    $self -> {'data'} = $self -> _read_file();
+    $self -> {data} = $self -> _read_file();
     my $details = $self -> details();
     $self -> _init_read_sub();
-    $self -> {'pos'} = $details -> {'data_start'};
+    $self -> {pos} = $details -> {data_start};
     $self -> move_to();
     return $self; 
 }
@@ -88,11 +89,11 @@ sub new {
 sub DESTROY {
     my $self = shift;
     return unless $self;
-    if ( exists $self -> {'handle'} ) {
-        $self -> {'handle'} -> close();
+    if ( exists $self->{handle} && defined $self->{handle} ) {
+        $self->{handle}->close();
     }
-    if ( exists $self -> {'tools'} ) {
-        delete $self -> {'tools'};
+    if ( exists $self->{tools} ) {
+        delete $self->{tools};
     }
 }
 
@@ -106,7 +107,7 @@ Returns the file name.
 
 sub file_name {
     my $self = shift;
-    return $self -> {'file'};
+    return $self -> {file};
 }
 
 =head2 get_info
@@ -128,8 +129,8 @@ Returns a reference to a hash containing;
 
 sub get_info {
     my $self = shift;
-    return unless exists $self -> {'data'} -> {'info'};
-    return $self -> {'data'} -> {'info'};
+    return unless exists $self -> {data} -> {info};
+    return $self -> {data} -> {info};
 }
 
 =head2 get_cues
@@ -173,15 +174,15 @@ Returns a reference to a hash containing;
 
 sub get_cues {
     my $self = shift;
-    return unless exists $self -> {'data'} -> {'cue'};
-    my $data = $self -> {'data'};
-    my $cues = $data -> {'cue'};
+    return unless exists $self -> {data} -> {cue};
+    my $data = $self -> {data};
+    my $cues = $data -> {cue};
     my $output = {};
     foreach my $id ( keys %{$cues} ) {
-        my $pos = $cues -> {$id} -> {'position'};
+        my $pos = $cues -> {$id} -> {position};
         my $record = { 'position' => $pos };
-        $record -> {'label'} = $data -> {'labl'} -> {$id} if ( exists $data -> {'labl'} -> {$id} );
-        $record -> {'note'} = $data -> {'note'} -> {$id} if ( exists $data -> {'note'} -> {$id} );
+        $record -> {label} = $data -> {labl} -> {$id} if ( exists $data -> {labl} -> {$id} );
+        $record -> {note} = $data -> {note} -> {$id} if ( exists $data -> {note} -> {$id} );
         $output -> {$id} = $record;
     }
     return $output; 
@@ -198,9 +199,9 @@ Reads raw packed bytes from the current audio data position in the file.
 sub read_raw {
     my $self = shift;
     my $len = shift;
-    my $data_finish = $self -> {'data'} -> {'data_finish'};
-    if ( $self -> {'pos'} + $len > $data_finish ) {
-        $len = $data_finish - $self -> {'pos'};
+    my $data_finish = $self -> {data} -> {data_finish};
+    if ( $self -> {pos} + $len > $data_finish ) {
+        $len = $data_finish - $self -> {pos};
     }
     return $self -> _read_raw( $len );
 }
@@ -216,7 +217,7 @@ Reads raw packed samples from the current audio data position in the file.
 sub read_raw_samples {
     my $self = shift;
     my $len = shift;
-    $len *= $self -> {'data'} -> {'block_align'};
+    $len *= $self -> {data} -> {block_align};
     return $self -> read_raw( $len );
 }
 
@@ -225,7 +226,7 @@ sub _read_raw {
     my $len = shift;
     my $data;
     return unless $len && $len > 0;
-    $self -> {'pos'} += read $self -> {'handle'}, $data, $len;
+    $self -> {pos} += read $self -> {handle}, $data, $len;
     return $data; 
 }
 
@@ -249,21 +250,21 @@ sub read { die "ERROR: can't call read without first calling _init_read_sub"; };
 
 sub _init_read_sub {
     my $self = shift;
-    my $handle      = $self -> {'handle'};
-    my $details     = $self -> {'data'};
-    my $channels    = $details -> {'channels'};
-    my $block       = $details -> {'block_align'};
+    my $handle      = $self -> {handle};
+    my $details     = $self -> {data};
+    my $channels    = $details -> {channels};
+    my $block       = $details -> {block_align};
     my $read_op;
 
     #TODO: we try to do something if we have bits_per_sample != multiple of 8?
-    if ( $details -> {'bits_sample'} <= 8 ) {
+    if ( $details -> {bits_sample} <= 8 ) {
         # Data in .wav-files with <= 8 bits is unsigned. >8 bits is signed
-        my $offset = 2 ** ($details -> {'bits_sample'}-1);
+        my $offset = 2 ** ($details -> {bits_sample}-1);
         $read_op = q[ return map $_ - ] . $offset .
                    q[, unpack( 'C'.$channels, $val ); ];
-    } elsif ( $details -> {'bits_sample'} == 16 ) {
+    } elsif ( $details -> {bits_sample} == 16 ) {
         # 16 bits could be handled by general case below, but this is faster
-        if ( $self -> {'tools'} -> is_big_endian() ) {
+        if ( $self -> {tools} -> is_big_endian() ) {
             $read_op = q[ return
                 unpack 's' . $channels,        # 3. unpack native as signed short
                 pack   'S' . $channels,        # 2. pack native unsigned short
@@ -272,11 +273,11 @@ sub _init_read_sub {
         } else {
             $read_op = q[ return unpack( 's' . $channels, $val ); ];
         }
-    } elsif ( $details -> {'bits_sample'} <= 32 ) {
-        my $bytes  = $details -> {'block_align'} / $channels;
+    } elsif ( $details -> {bits_sample} <= 32 ) {
+        my $bytes  = $details -> {block_align} / $channels;
         my $fill   = 4 - $bytes;
-        my $limit  = 2 ** ($details -> {'bits_sample'}-1);
-        my $offset = 2 **  $details -> {'bits_sample'};
+        my $limit  = 2 ** ($details -> {bits_sample}-1);
+        my $offset = 2 **  $details -> {bits_sample};
 #warn "b: $bytes, f: $fill";    
         $read_op = q[ return 
             map    {$_ & ] . $limit . q[ ?           # 4. If sign bit is set
@@ -296,25 +297,25 @@ sub _init_read_sub {
         $self->_error("Unpacking elements with more than 32 ($details->{bits_sample}) bits per sample not supported!");
     }
 
-    $self -> {'read_sub_string'} = q[
+    $self -> {read_sub_string} = q[
         sub {
             my $val;
-            $self -> {'pos'} += read( $handle, $val, $block );
+            $self -> {pos} += read( $handle, $val, $block );
             return unless defined $val;
             ] . $read_op . q[
         };
     ];
     if( $Audio::Wav::_has_inline ) {
-        init( $handle, $details->{'bits_sample'}/8, $channels,
-            $self -> {'tools'} -> is_big_endian() ? 1 : 0);
+        init( $handle, $details->{bits_sample}/8, $channels,
+            $self -> {tools} -> is_big_endian() ? 1 : 0);
         *read = \&read_c;
     } else {
-        my $read_sub = eval $self -> {'read_sub_string'};
+        my $read_sub = eval $self -> {read_sub_string};
         die "eval of read_sub failed: $@\n" if($@);
-        $self -> {'read_sub'} = $read_sub; #in case any legacy code peaked at that
+        $self -> {read_sub} = $read_sub; #in case any legacy code peaked at that
         *read = \&$read_sub;
     }
-#warn $self -> {'read_sub_string'};
+#warn $self -> {read_sub_string};
 }
 
 =head2 position
@@ -327,7 +328,7 @@ Returns the current audio data position (as byte offset).
 
 sub position {
     my $self = shift;
-    return $self -> {'pos'} - $self -> {'data'} -> {'data_start'};
+    return $self -> {pos} - $self -> {data} -> {data_start};
 }
 
 =head2 position_samples
@@ -340,7 +341,7 @@ Returns the current audio data position (in samples).
 
 sub position_samples {
     my $self = shift;
-    return ( $self -> {'pos'} - $self -> {'data'} -> {'data_start'} ) / $self -> {'data'} -> {'block_align'};
+    return ( $self -> {pos} - $self -> {data} -> {data_start} ) / $self -> {data} -> {block_align};
 }
 
 =head2 move_to
@@ -354,19 +355,19 @@ Moves the current audio data position to byte offset.
 sub move_to {
     my $self = shift;
     my $pos = shift;
-    my $data_start = $self -> {'data'} -> {'data_start'};
+    my $data_start = $self -> {data} -> {data_start};
     if ( $pos ) {
 	$pos = 0 if $pos < 0;
     } else {
 	$pos = 0;
     }
     $pos += $data_start;
-    if ( $pos > $self -> {'pos'} ) {
+    if ( $pos > $self -> {pos} ) {
         my $max_pos = $self -> reread_length() + $data_start;
         $pos = $max_pos if $pos > $max_pos;
     }
-    if ( seek $self -> {'handle'}, $pos, 0 ) {
-	$self -> {'pos'} = $pos;
+    if ( seek $self -> {handle}, $pos, 0 ) {
+	$self -> {pos} = $pos;
 	return 1;
     } else {
 	return $self -> _error( "can't move to position '$pos'" );
@@ -385,7 +386,7 @@ sub move_to_sample {
     my $self = shift;
     my $pos = shift;
     return $self -> move_to() unless defined $pos ;
-    return $self -> move_to( $pos * $self -> {'data'} -> {'block_align'} );
+    return $self -> move_to( $pos * $self -> {data} -> {block_align} );
 }
 
 =head2 length
@@ -398,7 +399,7 @@ Returns the number of bytes of audio data in the file.
 
 sub length {
     my $self = shift;
-    return $self -> {'data'} -> {'data_length'};
+    return $self -> {data} -> {data_length};
 }
 
 =head2 length_samples
@@ -411,8 +412,8 @@ Returns the number of samples of audio data in the file.
 
 sub length_samples {
     my $self = shift;
-    my $data = $self -> {'data'};
-    return $data -> {'data_length'} / $data -> {'block_align'};
+    my $data = $self -> {data};
+    return $data -> {data_length} / $data -> {block_align};
 }
 
 =head2 length_seconds
@@ -425,8 +426,8 @@ Returns the number of seconds of audio data in the file.
 
 sub length_seconds {
     my $self = shift;
-    my $data = $self -> {'data'};
-    return $data -> {'data_length'} / $data -> {'bytes_sec'};
+    my $data = $self -> {data};
+    return $data -> {data_length} / $data -> {bytes_sec};
 }
 
 =head2 details
@@ -442,7 +443,7 @@ Too many to list here, try it with Data::Dumper.....
 
 sub details {
     my $self = shift;
-    return $self -> {'data'};
+    return $self -> {data};
 }
 
 =head2 reread_length
@@ -456,14 +457,14 @@ as we are reading it.
 
 sub reread_length {
     my $self = shift;
-    my $handle = $self -> {'handle'};
-    my $old_pos = $self -> {'pos'};
-    my $data = $self -> {'data'};
-    my $data_start = $data -> {'data_start'};
+    my $handle = $self -> {handle};
+    my $old_pos = $self -> {pos};
+    my $data = $self -> {data};
+    my $data_start = $data -> {data_start};
     seek $handle, $data_start - 4, 0;
     my $new_length = $self -> _read_long();
     seek $handle, $old_pos, 0;
-    $data -> {'data_length'} = $new_length;
+    $data -> {data_length} = $new_length;
     return $new_length; 
 }
 
@@ -471,16 +472,16 @@ sub reread_length {
 
 sub _read_file {
     my $self = shift;
-    my $handle = $self -> {'handle'};
+    my $handle = $self -> {handle};
     my %details;
     my $type = $self -> _read_raw( 4 );
     my $length = $self -> _read_long( );
     my $subtype = $self -> _read_raw( 4 );
-    my $tools = $self -> {'tools'};
+    my $tools = $self -> {tools};
     my $old_cooledit = $tools -> is_oldcooledithack();
     my $debug = $tools -> is_debug();
 
-    $details{'total_length'} = $length;
+    $details{total_length} = $length;
 
     unless ( $type eq 'RIFF' && $subtype eq 'WAVE' ) {
         return $self -> _error( "doesn't seem to be a wav file" );
@@ -488,7 +489,7 @@ sub _read_file {
 
     my $walkover;  # for fixing cooledit 96 data-chunk bug
 
-    while ( ! eof $handle && $self -> {'pos'} < $length ) {
+    while ( ! eof $handle && $self -> {pos} < $length ) {
         my $head;
         if ( $walkover ) {
             # rectify cooledit 96 data-chunk bug
@@ -502,7 +503,7 @@ sub _read_file {
         printf "debug: head: '$head' at %6d (%6d bytes)\n", $self->{pos}, $chunk_len if $debug;
         if ( $head eq 'fmt ' ) {
             my $format = $self -> _read_fmt( $chunk_len );
-            my $comp = delete $format -> {'format'};
+            my $comp = delete $format -> {format};
             if ( $comp == 65534 ) {
                 $format -> {'wave-ex'} = 1;
             } elsif ( $comp != 1 ) {
@@ -513,27 +514,27 @@ sub _read_file {
             %details = ( %details, %{$format} );
             next;
         } elsif ( $head eq 'cue ' ) {
-            $details{'cue'} = $self -> _read_cue( $chunk_len, \%details );
+            $details{cue} = $self -> _read_cue( $chunk_len, \%details );
             next;
         } elsif ( $head eq 'smpl' ) {
-            $details{'sampler'} = $self -> _read_sampler( $chunk_len );
+            $details{sampler} = $self -> _read_sampler( $chunk_len );
             next;
         } elsif ( $head eq 'LIST' ) {
             my $list = $self -> _read_list( $chunk_len, \%details );
             next;
         } elsif ( $head eq 'DISP' ) {
-            $details{'display'} = $self -> _read_disp( $chunk_len );
+            $details{display} = $self -> _read_disp( $chunk_len );
             next;
         } elsif ( $head eq 'data' ) {
-            $details{'data_start'} = $self -> {'pos'};
-            $details{'data_length'} = $chunk_len;
+            $details{data_start} = $self -> {pos};
+            $details{data_length} = $chunk_len;
         } else {
             $head =~ s/[^\w]+//g;
             $self -> _error( "ignored unknown block type: $head at $self->{pos} for $chunk_len", 'warn' );
         }
 
         seek $handle, $chunk_len, 1;
-        $self -> {'pos'} += $chunk_len;
+        $self -> {pos} += $chunk_len;
 
         # read padding
         if ($chunk_len % 2) {
@@ -549,18 +550,18 @@ sub _read_file {
         #    $chunk_len += 1 if $chunk_len % 2; # padding
         #}
         #seek $handle, $chunk_len, 1;
-        #$self -> {'pos'} += $chunk_len;
+        #$self -> {pos} += $chunk_len;
 
     }
 
-    if ( exists $details{'data_start'} ) {
-        $details{'length'} = $details{'data_length'} / $details{'bytes_sec'};
-        $details{'data_finish'} = $details{'data_start'} + $details{'data_length'};
+    if ( exists $details{data_start} ) {
+        $details{length} = $details{data_length} / $details{bytes_sec};
+        $details{data_finish} = $details{data_start} + $details{data_length};
     } else {
-        $details{'data_start'} = 0;
-        $details{'data_length'} = 0;
-        $details{'length'} = 0;
-        $details{'data_finish'} = 0;
+        $details{data_start} = 0;
+        $details{data_length} = 0;
+        $details{length} = 0;
+        $details{data_finish} = 0;
     }
     return \%details; 
 }
@@ -601,11 +602,11 @@ sub _read_list {
         }
         # if it's a broken file and we've read too much then go back
         if ( $pos > $length ) {
-            seek $self->{'handle'}, $length-$pos, 1;
+            seek $self->{handle}, $length-$pos, 1;
         }
     }
     elsif ( $note eq 'INFO' ) {
-        my %allowed = $self -> {'tools'} -> get_info_fields();
+        my %allowed = $self -> {tools} -> get_info_fields();
         while ( $pos < $length ) {
             my $head = $self -> _read_raw( 4 );
             $pos += 4;
@@ -614,7 +615,7 @@ sub _read_list {
             my $text = $self -> _read_raw( $bits );
             if ( $allowed{$head} ) {
                 $text =~ s/\0+$//;
-                $details -> {'info'} -> { $allowed{$head} } = $text;
+                $details -> {info} -> { $allowed{$head} } = $text;
             }
             if ($bits % 2) { # eat padding
                 my $padding = $self -> _read_raw(1);
@@ -636,7 +637,7 @@ sub _read_cue {
     my $output;
     for ( 1 .. $cues ) {
         my $record = $self -> _decode_block( \@fields, \@plain );
-        my $id = delete $record -> {'id'};
+        my $id = delete $record -> {id};
         $output -> {$id} = $record;
     }
     return $output; 
@@ -654,20 +655,20 @@ sub _read_disp {
 sub _read_sampler {
     my $self = shift;
     my $length = shift;
-    my %sampler_fields = $self -> {'tools'} -> get_sampler_fields();
+    my %sampler_fields = $self -> {tools} -> get_sampler_fields();
 
-    my $record = $self -> _decode_block( $sampler_fields{'fields'} );
+    my $record = $self -> _decode_block( $sampler_fields{fields} );
 
-    for my $id ( 1 .. $record -> {'sample_loops'} ) {
-        push @{ $record -> {'loop'} }, $self -> _decode_block( $sampler_fields{'loop'} );
+    for my $id ( 1 .. $record -> {sample_loops} ) {
+        push @{ $record -> {loop} }, $self -> _decode_block( $sampler_fields{loop} );
     }
 
-    $record -> {'sample_specific_data'} = _read_raw( $record -> {'sample_data'} );
+    $record -> {sample_specific_data} = _read_raw( $record -> {sample_data} );
 
     my $read_bytes =
         9 * 4                                   # sampler info
-        + 6 * 4 * $record -> {'sample_loops'}   # loops
-        + $record -> {'sample_data'};           # specific data
+        + 6 * 4 * $record -> {sample_loops}   # loops
+        + $record -> {sample_data};           # specific data
 
 
     # read any junk
@@ -680,7 +681,7 @@ sub _read_sampler {
     }
 
     # temporary nasty hack to gooble the last bogus 12 bytes
-    #my $extra = $self -> _decode_block( $sampler_fields{'extra'} );
+    #my $extra = $self -> _decode_block( $sampler_fields{extra} );
 
     return $record; 
 }
@@ -715,11 +716,11 @@ sub _read_fmt {
     my $self = shift;
     my $length = shift;
     my $data = $self -> _read_raw( $length );
-    my $types = $self -> {'tools'} -> get_wav_pack();
+    my $types = $self -> {tools} -> get_wav_pack();
     my $pack_str = '';
-    my $fields = $types -> {'order'};
+    my $fields = $types -> {order};
     foreach my $type ( @{$fields} ) {
-        $pack_str .= $types -> {'types'} -> {$type};
+        $pack_str .= $types -> {types} -> {$type};
     }
     my @data = unpack $pack_str, $data;
     my %record;
@@ -737,13 +738,13 @@ sub _read_long {
 
 sub _error {
     my ($self, @args) = @_;
-    return $self -> {'tools'} -> error( $self -> {'file'}, @args );
+    return $self -> {tools} -> error( $self -> {file}, @args );
 }
 
 =head1 AUTHORS
 
     Nick Peskett (see http://www.peskett.co.uk/ for contact details).
-    Brian Szymanski <ski-cpan@allafrica.com> (0.07-0.12)
+    Brian Szymanski <ski-cpan@allafrica.com> (0.07-0.13)
     Wolfram humann (pureperl 24 and 32 bit read support in 0.09)
     Kurt George Gjerde <kurt.gjerde@media.uib.no>. (0.02-0.03)
 

@@ -7,7 +7,7 @@ use FileHandle;
 use Audio::Wav::Write::Header;
 
 use vars qw( $VERSION );
-$VERSION = '0.12';
+$VERSION = '0.13';
 
 =head1 NAME
 
@@ -40,7 +40,7 @@ Audio::Wav::Write - Module for writing Microsoft WAV files.
 	my $length = shift;
 	my $pi = ( 22 / 7 ) * 2;
 	$length *= $sample_rate;
-	my $max_no =  ( 2 ** $bits_sample ) / 2;
+	my $max_no =  ( 2 ** $bits_sample ) / 2 - 1;
 	for my $pos ( 0 .. $length ) {
 	    $time = $pos / $sample_rate;
 	    $time *= $hz;
@@ -76,11 +76,11 @@ sub new {
     my $details = shift;
     my $tools = shift;
 
-    my $handle = new FileHandle ">$out_file";
+    my $handle = (ref $out_file eq 'GLOB') ? $out_file : new FileHandle ">$out_file";
 
     my $use_cache = 1;
-    if ( ref $details eq 'HASH' && exists $details -> {'no_cache'} ) {
-        my $no_cache = delete $details -> {'no_cache'};
+    if ( ref $details eq 'HASH' && exists $details -> {no_cache} ) {
+        my $no_cache = delete $details -> {no_cache};
         $use_cache = 0 if $no_cache;
     }
 
@@ -91,7 +91,7 @@ sub new {
         'cache_size'  => 4096,
         'handle'      => $handle,
         'details'     => $details,
-        'block_align' => $details -> {'block_align'},
+        'block_align' => $details -> {block_align},
         'tools'       => $tools,
         'done_finish' => 0,
     };
@@ -111,10 +111,10 @@ sub new {
     $self -> _start_file();
     $self -> _examine_details( $details );
 
-    if ( $self -> {'details'} -> {'bits_sample'} <= 8 ) {
-        $self -> {'use_offset'} = ( 2 ** $self -> {'details'} -> {'bits_sample'} ) / 2;
+    if ( $self -> {details} -> {bits_sample} <= 8 ) {
+        $self -> {use_offset} = ( 2 ** $self -> {details} -> {bits_sample} ) / 2;
     } else {
-        $self -> {'use_offset'} = 0;
+        $self -> {use_offset} = 0;
     }
 
     return $self; 
@@ -123,7 +123,7 @@ sub new {
 sub DESTROY {
     my $self = shift;
     return unless $self;
-    return if $self -> {'done_finish'};
+    return if $self -> {done_finish};
     $self -> finish();
 }
 
@@ -137,10 +137,10 @@ Finishes off & closes the current wav file.
 
 sub finish {
     my $self = shift;
-    $self -> _purge_cache() if $self -> {'use_cache'};
-    $self -> {'header'} -> finish( $self -> {'pos'} );
-    $self -> {'handle'} -> close();
-    $self -> {'done_finish'} = 1;
+    $self -> _purge_cache() if $self -> {use_cache};
+    $self -> {header} -> finish( $self -> {pos} );
+    $self -> {handle} -> close();
+    $self -> {done_finish} = 1;
 }
 
 =head2 add_cue
@@ -157,18 +157,18 @@ sub add_cue {
     my $pos = shift;
     my $label = shift;
     my $note = shift;
-    my $block_align = $self -> {'details'} -> {'block_align'};
+    my $block_align = $self -> {details} -> {block_align};
     if ( defined $pos ) {
-        $pos /= $block_align if $self -> {'tools'} -> is_01compatible();
+        $pos /= $block_align if $self -> {tools} -> is_01compatible();
     } else {
-        $pos = $self -> {'pos'} / $block_align;
+        $pos = $self -> {pos} / $block_align;
     }
     my $output = {
         'pos' => $pos,
     };
-    $output -> {'label'} = $label if $label;
-    $output -> {'note'} = $note if $note;
-    $self -> {'header'} -> add_cue( $output );
+    $output -> {label} = $label if $label;
+    $output -> {note} = $note if $note;
+    $self -> {header} -> add_cue( $output );
 }
 
 =head2 set_sampler_info
@@ -191,7 +191,7 @@ All parameters are optional.
 
 sub set_sampler_info {
     my ($self, @args) = @_;
-    return $self -> {'header'} -> set_sampler_info( @args );
+    return $self -> {header} -> set_sampler_info( @args );
 }
 
 =head2 add_sampler_loop
@@ -212,7 +212,7 @@ All parameters are optional except start & end.
 
 sub add_sampler_loop {
     my ($self, @args) = @_;
-    return $self -> {'header'} -> add_sampler_loop( @args );
+    return $self -> {header} -> add_sampler_loop( @args );
 }
 
 =head2 add_display
@@ -221,7 +221,7 @@ sub add_sampler_loop {
 
 sub add_display {
     my ($self, @args) = @_;
-    return $self -> {'header'} -> add_display( @args );
+    return $self -> {header} -> add_display( @args );
 }
 
 =head2 set_info
@@ -234,7 +234,7 @@ Sets information to be contained in the wav file.
 
 sub set_info {
     my ($self, %info) = @_;
-    $self -> {'details'} -> {'info'} = { %{ $self -> {'details'} -> {'info'} }, %info };
+    $self -> {details} -> {info} = { %{ $self -> {details} -> {info} }, %info };
 }
 
 =head2 file_name
@@ -247,7 +247,7 @@ Returns the current filename.
 
 sub file_name {
     my $self = shift;
-    return $self -> {'out_file'};
+    return $self -> {out_file};
 }
 
 =head2 write
@@ -265,11 +265,20 @@ Each element in @sample_channels should be in the range of;
 
 sub write {
     my ($self, @args) = @_;
-    my $channels = $self -> {'details'} -> {'channels'};
-    if ( $self -> {'use_offset'} ) {
-        return $self -> write_raw( pack 'C'.$channels, map { $_ + $self -> {'use_offset'} } @args );
+    my $channels = $self -> {details} -> {channels};
+    if ( $self -> {use_offset} ) {
+        return $self -> write_raw( pack 'C'.$channels, map { $_ + $self -> {use_offset} } @args );
     } else {
-        return $self -> write_raw( pack 'v'.$channels, @args );
+        #TODO: performance: when we move to _init_write_sub, just use:
+        #32: pack 'V1', ... 
+        #24: substr pack('V1', ...), 3
+        #16: pack 'v1', ...
+        my $bytes_per_sample = $self->{details}->{bits_sample} >> 3;
+        use bytes;
+        my @samples = map { substr pack('V1', $_), 0, $bytes_per_sample } @args; 
+#warn "bits/sample: $self->{details}->{bits_sample}, bytes/sample: $bytes_per_sample";
+#warn "output samples(".scalar @samples."): ".join "-", map ord, split //, join '', @samples;
+        return $self -> write_raw( @samples );
     }
 }
 
@@ -293,15 +302,15 @@ sub write_raw {
     $len = length $data unless $len;
     return unless $len;
     my $wrote = $len;
-    if ( $self -> {'use_cache'} ) {
-        $self -> {'write_cache'} .= $data;
-        my $cache_len = length $self -> {'write_cache'};
-        $self -> _purge_cache( $cache_len ) unless $cache_len < $self -> {'cache_size'};
+    if ( $self -> {use_cache} ) {
+        $self -> {write_cache} .= $data;
+        my $cache_len = length $self -> {write_cache};
+        $self -> _purge_cache( $cache_len ) unless $cache_len < $self -> {cache_size};
     } else {
-        $wrote = syswrite $self -> {'handle'}, $data, $len;
+        $wrote = syswrite $self -> {handle}, $data, $len;
     }
 
-    $self -> {'pos'} += $wrote;
+    $self -> {pos} += $wrote;
     return $wrote; 
 }
 
@@ -321,7 +330,7 @@ Where;
 sub write_raw_samples {
     my ($self, @args) = @_;
     my $written = $self -> write_raw( @args );
-    return $written / $self -> {'details'} -> {'block_align'};
+    return $written / $self -> {details} -> {block_align};
 }
 
 ####################
@@ -330,25 +339,25 @@ sub _start_file {
     my $self = shift;
     my( $file, $details, $tools, $handle ) = map { $self -> {$_} } qw( out_file details tools handle );
     my $header = Audio::Wav::Write::Header -> new( $file, $details, $tools, $handle );
-    $self -> {'header'} = $header;
+    $self -> {header} = $header;
     my $data = $header -> start();
     $self -> write_raw( $data );
-    $self -> {'pos'} = 0;
+    $self -> {pos} = 0;
 }
 
 sub _purge_cache {
     my $self = shift;
     my $len = shift;
-    return unless $self -> {'write_cache'};
-    my $cache = $self -> {'write_cache'};
+    return unless $self -> {write_cache};
+    my $cache = $self -> {write_cache};
     $len = length $cache unless $len;
-    my $res = syswrite $self -> {'handle'}, $cache, $len;
-    $self -> {'write_cache'} = undef;
+    my $res = syswrite $self -> {handle}, $cache, $len;
+    $self -> {write_cache} = undef;
 }
 
 sub _init {
     my $self = shift;
-    my $details = $self -> {'details'};
+    my $details = $self -> {details};
     my $output = {};
     my @missing;
     my @needed = qw ( bits_sample channels sample_rate );
@@ -366,21 +375,21 @@ sub _init {
         next unless ( exists( $details -> {$want} ) && $details -> {$want} );
         $output -> {$want} = $details -> {$want};
     }
-    unless ( exists $details -> {'block_align'} ) {
+    unless ( exists $details -> {block_align} ) {
         my( $channels, $bits ) = map { $output -> {$_} } qw( channels bits_sample );
         my $mod_bits = $bits % 8 ? 1 : 0;
         $mod_bits += int $bits / 8;
-        $output -> {'block_align'} = $channels * $mod_bits;
+        $output -> {block_align} = $channels * $mod_bits;
     }
-    unless ( exists $output -> {'bytes_sec'} ) {
+    unless ( exists $output -> {bytes_sec} ) {
         my( $rate, $block ) = map { $output -> {$_} } qw( sample_rate block_align );
-        $output -> {'bytes_sec'} = $rate * $block;
+        $output -> {bytes_sec} = $rate * $block;
     }
-    unless ( exists $output -> {'info'} ) {
-        $output -> {'info'} = {};
+    unless ( exists $output -> {info} ) {
+        $output -> {info} = {};
     }
 
-    $self -> {'details'} = $output; 
+    $self -> {details} = $output; 
 }
 
 sub _examine_details {
@@ -389,26 +398,26 @@ sub _examine_details {
     my( $cue, $label, $note ) =
         map { exists( $details -> {$_} ) ? $details -> {$_} : {} }
         qw( cue labl note );
-    my $block_align = $self -> {'details'} -> {'block_align'};
-    my $tools = $self -> {'tools'};
+    my $block_align = $self -> {details} -> {block_align};
+    my $tools = $self -> {tools};
     foreach my $id ( sort keys %{$cue} ) {       # <-- Thanks to jeremyd713@hotmail.com
-        my $pos = $cue -> {$id} -> {'position'};
+        my $pos = $cue -> {$id} -> {position};
         $pos *= $block_align if $tools -> is_01compatible();
         my( $in_label, $in_note ) = 
             map { exists( $_ -> {$id} ) ? $_ -> {$id} : '' }
             ( $label, $note );
         $self -> add_cue( $pos, $in_label, $in_note );
     }
-    if ( exists $details -> {'sampler'} ) {
-        my $sampler = $details -> {'sampler'};
-        my $loops = delete $sampler -> {'loop'};
+    if ( exists $details -> {sampler} ) {
+        my $sampler = $details -> {sampler};
+        my $loops = delete $sampler -> {loop};
         $self -> set_sampler_info( %{$sampler} );
         foreach my $loop ( @{$loops} ) {
             $self -> add_sampler_loop( %{$loop} );
         }
     }
-    if ( exists $details -> {'display'} ) {
-        my @display = @{ $details -> {'display'} };
+    if ( exists $details -> {display} ) {
+        my @display = @{ $details -> {display} };
         my @fields = qw( id data );
         $self -> add_display( map { $fields[$_] => $display[$_] } 0, 1 );
     }
@@ -416,7 +425,7 @@ sub _examine_details {
 
 sub _error {
     my ($self, @args) = @_;
-    return $self -> {'tools'} -> error( $self -> {'out_file'}, @args );
+    return $self -> {tools} -> error( $self -> {out_file}, @args );
 }
 
 =head1 AUTHORS

@@ -36,8 +36,10 @@ my $file_out = $out_dir . '/testout.wav';
 my $file_copy = $out_dir . '/testcopy.wav';
 my $sample_rate = 11025;
 my $bits_sample = 8;
+#my $bits_sample = 32; warn "non-8-bit test";
 my $length = 2;
 my $channels = 1;
+#my $channels = 2; warn "stereo test";
 
 my $details =	{
     'bits_sample'	=> $bits_sample,

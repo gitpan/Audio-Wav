@@ -6,7 +6,7 @@ eval { require warnings; }; #it's ok if we can't load warnings
 use Audio::Wav::Tools;
 
 use vars qw( $VERSION );
-$VERSION = '0.12';
+$VERSION = '0.13';
 
 BEGIN {
 
@@ -18,7 +18,14 @@ BEGIN {
         # result in errors about @INC. hack around this by launching a
         # seperate process instead of simply checking $@ after:
         #   eval { Inline->import(C => "int foo() { return 0; }\n"); };
-        my $inline_c_ok = `$^X -e "require Inline::C; eval { Inline->import(C => q[int foo() { return 0; }]) }; print \\\$\@ ? 0 : 1"`;
+        use Config;
+        # don't use $^X, which breaks mod_perl - https://rt.cpan.org/Ticket/Display.html?id=62060
+        my $path = $Config{perlpath};
+        if ($^O ne 'VMS') {
+          $path .= $Config{_exe} unless $path =~ m/$Config{_exe}$/i;
+        }
+        my $inline_c_ok = `$path -e "require Inline::C; eval { Inline->import(C => q[int foo() { return 0; }]) }; print \\\$\@ ? 0 : 1"`;
+
         if($inline_c_ok) {
             $Audio::Wav::_has_inline = 1;
         } else {
@@ -59,14 +66,14 @@ Audio::Wav - Modules for reading & writing Microsoft WAV files.
     $write -> finish();
 
 
-    # splitting a multi-channel file to seperate mono files (slowly!);
+    # splitting a multi-channel file to separate mono files (slowly!);
     use Audio::Wav;
     my $read = $wav -> read( '4ch.wav' );
     my $details = $read -> details();
     my %out_details = map { $_ => $details -> {$_} } 'bits_sample', 'sample_rate';
-    $out_details{'channels'} = 1;
+    $out_details{channels} = 1;
     my @out_files;
-    my $in_channels = $details -> {'channels'};
+    my $in_channels = $details -> {channels};
     foreach my $channel ( 1 .. $in_channels ) {
         push @out_files, $wav -> write( 'multi_' . $channel . '.wav', \%out_details );
     }
@@ -79,7 +86,7 @@ Audio::Wav - Modules for reading & writing Microsoft WAV files.
         }
     }
 
-    # not entirely neccessary as finish is done in DESTROY now (if the file hasn't been finished already).
+    # not entirely necessary as finish is done in DESTROY now (if the file hasn't been finished already).
     foreach my $write ( @out_files ) {
         $write -> finish();
     }
@@ -159,7 +166,7 @@ sub write {
     require Audio::Wav::Write;
     my $write;
     if(ref $self) {
-        $write = Audio::Wav::Write -> new( $file, $details, $self -> {'tools'} );
+        $write = Audio::Wav::Write -> new( $file, $details, $self -> {tools} );
     } else {
         $write = Audio::Wav::Write -> new( $file, Audio::Wav::Tools -> new( @args ) );
     }
@@ -185,7 +192,7 @@ sub read {
     require Audio::Wav::Read;
     my $read;
     if(ref $self) {
-        $read = Audio::Wav::Read -> new( $file, $self -> {'tools'} );
+        $read = Audio::Wav::Read -> new( $file, $self -> {tools} );
     } else {
         $read = Audio::Wav::Read -> new( $file, Audio::Wav::Tools -> new( @args ) );
     }
@@ -201,12 +208,12 @@ If no error handler is set, die and warn will be used.
 
     sub myErrorHandler {
         my( %parameters ) = @_;
-        if ( $parameters{'warning'} ) {
+        if ( $parameters{warning} ) {
             # This is a non-critical warning
-            warn "Warning: $parameters{'filename'}: $parameters{'message'}\n";
+            warn "Warning: $parameters{filename}: $parameters{message}\n";
         } else {
             # Critical error!
-            die "ERROR: $parameters{'filename'}: $parameters{'message'}\n";
+            die "ERROR: $parameters{filename}: $parameters{message}\n";
         }
     }
     $wav -> set_error_handler( \&myErrorHandler );
@@ -216,21 +223,23 @@ If no error handler is set, die and warn will be used.
 
 sub set_error_handler {
     my ($self, @args) = @_;
-    $self -> {'tools'} -> set_error_handler( @args );
+    $self -> {tools} -> set_error_handler( @args );
 }
 
 =head1 COPYRIGHT
 
-    Copyright (c) 2007,2010 Brian Szymanski <brianski@cpan.org>
+   Copyright (c) 2007-2012 Brian Szymanski <brianski@cpan.org>
     Copyright (c) 1998-2006 Nick Peskett <npeskett@cpan.org> 
     Copyright (c) 2001 Kurt George Gjerde <KJERDE@cpan.org>
 
 =head1 AUTHORS
 
     Nick Peskett (see http://www.peskett.co.uk/ for contact details).
-    Brian Szymanski <ski-cpan@allafrica.com> (0.07-0.12)
+    Brian Szymanski <ski-cpan@allafrica.com> (0.07-0.13)
     Wolfram humann (pureperl 24 and 32 bit read support in 0.09)
     Kurt George Gjerde <kurt.gjerde@media.uib.no>. (0.02-0.03)
+
+    see also Changes file
 
 =cut
 
