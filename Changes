@@ -1,10 +1,14 @@
 Revision history for Perl extension Audio::Wav.
 
+0.14  Sun Apr 27 00:50:07 EDT 2014
+  - bugfix for https://rt.cpan.org/Public/Bug/Display.html?id=94951,
+    thanks to Haruka Kataoka
+
 0.13  Fri Mar 30 21:17:18 GMT 2012
   - read: don't call close() at DESTROY time when the file handle
     creationfailed during new() (Murali Ramanathan)
       https://rt.cpan.org/Ticket/Display.html?id=71462
-  - apply patch to allow read/write of files from handle
+  - apply patch to allow read/write of files from handle (Dan Church)
       https://rt.cpan.org/Ticket/Display.html?id=71715
   - fix problem with $^X under mod_perl (thanks, mario and david!)
       https://rt.cpan.org/Ticket/Display.html?id=62060

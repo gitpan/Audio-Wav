@@ -6,7 +6,7 @@ eval { require warnings; }; #it's ok if we can't load warnings
 use FileHandle;
 
 use vars qw( $VERSION );
-$VERSION = '0.13';
+$VERSION = '0.14';
 
 =head1 NAME
 
@@ -744,7 +744,7 @@ sub _error {
 =head1 AUTHORS
 
     Nick Peskett (see http://www.peskett.co.uk/ for contact details).
-    Brian Szymanski <ski-cpan@allafrica.com> (0.07-0.13)
+    Brian Szymanski <ski-cpan@allafrica.com> (0.07-0.14)
     Wolfram humann (pureperl 24 and 32 bit read support in 0.09)
     Kurt George Gjerde <kurt.gjerde@media.uib.no>. (0.02-0.03)
 

@@ -7,7 +7,7 @@ use FileHandle;
 use Audio::Wav::Write::Header;
 
 use vars qw( $VERSION );
-$VERSION = '0.13';
+$VERSION = '0.14';
 
 =head1 NAME
 
@@ -278,7 +278,7 @@ sub write {
         my @samples = map { substr pack('V1', $_), 0, $bytes_per_sample } @args; 
 #warn "bits/sample: $self->{details}->{bits_sample}, bytes/sample: $bytes_per_sample";
 #warn "output samples(".scalar @samples."): ".join "-", map ord, split //, join '', @samples;
-        return $self -> write_raw( @samples );
+        return $self -> write_raw( join '', @samples );
     }
 }
 
